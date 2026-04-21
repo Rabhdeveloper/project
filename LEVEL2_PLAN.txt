@@ -1,0 +1,80 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 2 PLAN
+  Saved: 2026-04-21
+===================================================
+
+LEVEL 1 (DONE):
+  - Auth: Register, Login, JWT, /me, PUT /me
+  - Profile Screen (full)
+  - Pomodoro Timer (client-side)
+  - Typing Practice (client-side)
+  - Dashboard with working nav
+
+LEVEL 2 GOAL: Make the app data-driven.
+  All user actions saved to MongoDB. Real charts on dashboard.
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+1. BACKEND — Study Sessions API  [NEW: app/api/sessions.py]
+   - POST /api/sessions      → save completed Pomodoro session
+   - GET  /api/sessions      → get all sessions for user
+   - GET  /api/sessions/weekly → last 7 days grouped by day (chart)
+   - GET  /api/sessions/stats  → totals: sessions count, hours, best day
+
+2. BACKEND — Typing Results API  [NEW: app/api/typing.py]
+   - POST /api/typing        → save result {wpm, accuracy, duration_seconds}
+   - GET  /api/typing        → get all results for user
+   - GET  /api/typing/best   → personal best WPM + average WPM
+
+3. BACKEND — Wire Routers  [MODIFY: app/main.py]
+   - Include sessions.router at /api/sessions
+   - Include typing.router at /api/typing
+
+4. FRONTEND — Save Study Sessions  [MODIFY: study_screen.dart]
+   - On Pomodoro complete → call POST /api/sessions
+   - Show "Session saved! ✅" toast
+
+5. FRONTEND — Save Typing Results  [MODIFY: typing_screen.dart]
+   - On test complete → call POST /api/typing
+   - Show "Saved ✅" badge on results screen
+
+6. FRONTEND — Live Dashboard  [MODIFY: dashboard_screen.dart]
+   - Fetch /api/auth/me → show real username in greeting
+   - Fetch /api/sessions/weekly → real chart data (not hardcoded)
+   - Fetch /api/sessions/stats → stat chips (Total Sessions, Hours)
+   - Add loading skeleton + pull-to-refresh
+
+7. FRONTEND — Stats Screen  [NEW: stats_screen.dart]
+   - 5th tab in bottom nav (📊 icon)
+   - Study tab: bar chart sessions/day, total hours, best streak
+   - Typing tab: line chart WPM over time, best WPM, avg accuracy
+   - History list: last 10 sessions with timestamps
+
+8. FRONTEND — Register Validation  [MODIFY: register_screen.dart]
+   - Username: min 3 chars
+   - Email: valid format
+   - Password: min 6 chars
+   - Inline errors below each field (not just snackbar)
+
+9. BACKEND — Input Validation  [MODIFY: app/models/user.py]
+   - Pydantic validators: password min 6, username min 3
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend (via /docs Swagger):
+    - POST /api/sessions with Bearer token
+    - GET  /api/sessions/weekly — check 7-day grouping
+    - POST /api/typing — save result
+    - GET  /api/typing/best — check best WPM
+
+  Frontend:
+    - Complete Pomodoro → record appears in MongoDB
+    - Complete typing → score saved + results show "Saved ✅"
+    - Dashboard loads real username + real chart
+    - Stats screen shows real charts
+    - Register with empty/short fields → inline error messages
+
+===================================================

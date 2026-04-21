@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, this.onNavigate});
+
+  /// Callback to switch tabs in MainLayout (1=Study, 2=Typing)
+  final void Function(int index)? onNavigate;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hello, User! \u{1F44B}'),
+        title: const Text('Dashboard 👋'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded),
@@ -22,7 +25,7 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // AI Suggestion Banner
+            // ── AI Suggestion Banner ─────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -73,19 +76,15 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Section Title
+            // ── Weekly Focus Section ─────────────────────────────────────────
             const Text(
               'Weekly Focus',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
-            // Graph Chart Dashboard
             SizedBox(
-              height: 250,
+              height: 230,
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.only(
@@ -96,34 +95,30 @@ class DashboardScreen extends StatelessWidget {
                         show: true,
                         drawVerticalLine: false,
                         horizontalInterval: 1,
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: Colors.white.withOpacity(0.1),
-                            strokeWidth: 1,
-                          );
-                        },
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: Colors.white.withOpacity(0.08),
+                          strokeWidth: 1,
+                        ),
                       ),
                       titlesData: FlTitlesData(
                         show: true,
                         rightTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
+                            sideTitles: SideTitles(showTitles: false)),
                         topTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
+                            sideTitles: SideTitles(showTitles: false)),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 30,
                             interval: 1,
-                            getTitlesWidget: bottomTitleWidgets,
+                            getTitlesWidget: _bottomTitleWidgets,
                           ),
                         ),
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
                             interval: 1,
-                            getTitlesWidget: leftTitleWidgets,
+                            getTitlesWidget: _leftTitleWidgets,
                             reservedSize: 42,
                           ),
                         ),
@@ -145,13 +140,13 @@ class DashboardScreen extends StatelessWidget {
                             FlSpot(6, 4.2),
                           ],
                           isCurved: true,
-                          color: const Color(0xFF10B981), // Emerald
+                          color: const Color(0xFF10B981),
                           barWidth: 4,
                           isStrokeCapRound: true,
                           dotData: const FlDotData(show: false),
                           belowBarData: BarAreaData(
                             show: true,
-                            color: const Color(0xFF10B981).withOpacity(0.15),
+                            color: const Color(0xFF10B981).withOpacity(0.12),
                           ),
                         ),
                       ],
@@ -162,123 +157,127 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Action Buttons
+            // ── Quick Actions ─────────────────────────────────────────────────
+            const Text(
+              'Quick Actions',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: _buildActionCard(
-                    context,
+                  child: _ActionCard(
                     title: 'Start Pomodoro',
-                    icon: Icons.timer_outlined,
+                    subtitle: 'Focus timer',
+                    icon: Icons.timer_rounded,
                     color: const Color(0xFFF59E0B),
+                    onTap: () => onNavigate?.call(1), // Navigate to Study tab
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildActionCard(
-                    context,
+                  child: _ActionCard(
                     title: 'Typing Test',
-                    icon: Icons.keyboard_alt_outlined,
+                    subtitle: 'Test your speed',
+                    icon: Icons.keyboard_alt_rounded,
                     color: const Color(0xFF3B82F6),
+                    onTap: () => onNavigate?.call(2), // Navigate to Typing tab
                   ),
                 ),
               ],
-            )
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  Widget bottomTitleWidgets(double value, TitleMeta meta) {
+  Widget _bottomTitleWidgets(double value, TitleMeta meta) {
     const style = TextStyle(
       color: Color(0xFF94A3B8),
       fontWeight: FontWeight.bold,
       fontSize: 12,
     );
-    Widget text;
-    switch (value.toInt()) {
-      case 0:
-        text = const Text('Mon', style: style);
-        break;
-      case 2:
-        text = const Text('Wed', style: style);
-        break;
-      case 4:
-        text = const Text('Fri', style: style);
-        break;
-      case 6:
-        text = const Text('Sun', style: style);
-        break;
-      default:
-        text = const Text('', style: style);
-        break;
-    }
-
+    final labels = {0: 'Mon', 2: 'Wed', 4: 'Fri', 6: 'Sun'};
     return SideTitleWidget(
       meta: meta,
-      child: text,
+      child: Text(labels[value.toInt()] ?? '', style: style),
     );
   }
 
-  Widget leftTitleWidgets(double value, TitleMeta meta) {
+  Widget _leftTitleWidgets(double value, TitleMeta meta) {
     const style = TextStyle(
       color: Color(0xFF94A3B8),
       fontWeight: FontWeight.bold,
       fontSize: 12,
     );
-    String text;
-    switch (value.toInt()) {
-      case 1:
-        text = '1h';
-        break;
-      case 3:
-        text = '3h';
-        break;
-      case 5:
-        text = '5h';
-        break;
-      default:
-        return Container();
-    }
-
-    return Text(text, style: style, textAlign: TextAlign.left);
+    final labels = {1: '1h', 3: '3h', 5: '5h'};
+    final label = labels[value.toInt()];
+    if (label == null) return const SizedBox.shrink();
+    return Text(label, style: style, textAlign: TextAlign.left);
   }
+}
 
-  Widget _buildActionCard(BuildContext context, {required String title, required IconData icon, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              shape: BoxShape.circle,
+// ─── Action Card Widget ────────────────────────────────────────────────────────
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            child: Icon(icon, color: color, size: 32),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 32),
             ),
-          ),
-        ],
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            ),
+          ],
+        ),
       ),
     );
   }
