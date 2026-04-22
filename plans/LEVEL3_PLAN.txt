@@ -1,0 +1,157 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 3 PLAN
+  Saved: 2026-04-22
+===================================================
+
+LEVEL 1 (DONE):
+  - Auth: Register, Login, JWT, /me, PUT /me
+  - Profile Screen (full)
+  - Pomodoro Timer (client-side)
+  - Typing Practice (client-side)
+  - Dashboard with working nav
+
+LEVEL 2 (DONE):
+  - Study Sessions API (POST, GET, /weekly, /stats)
+  - Typing Results API (POST, GET, /best)
+  - Save sessions on Pomodoro complete
+  - Save results on typing complete
+  - Live Dashboard (real username, real chart, real stats)
+  - Stats Screen with charts + history
+  - Register inline validation
+  - Backend Pydantic validation
+
+LEVEL 3 GOAL: Engagement, Gamification & Personalization.
+  Daily goals, streaks, achievements, custom timer,
+  study subjects, leaderboard, and a settings screen.
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+1. BACKEND — Goals & Streaks API  [NEW: app/api/goals.py]
+   - GET  /api/goals          → get user's daily goal + current streak
+   - PUT  /api/goals          → update daily goal target {daily_target: 4}
+   - GET  /api/goals/today    → today's progress (sessions done vs target)
+   - The streak auto-calculates: consecutive days the user met their goal
+
+2. BACKEND — Goals Model  [NEW: app/models/goals.py]
+   - UserGoal: {user_id, daily_target (default 4), created_at}
+   - Streak is computed on-the-fly from study_sessions collection
+
+3. BACKEND — Achievements API  [NEW: app/api/achievements.py]
+   - GET  /api/achievements      → list all achievements with locked/unlocked
+   - POST /api/achievements/check → re-evaluate and unlock any new badges
+   - Achievement definitions (hardcoded list):
+       🔥 First Flame      — Complete 1 study session
+       📚 Bookworm         — Complete 10 study sessions
+       🏆 Century Club     — Complete 100 study sessions
+       ⚡ Speed Demon      — Reach 60+ WPM in typing
+       🎯 Sharpshooter     — Reach 95%+ accuracy in typing
+       📅 Week Warrior     — 7-day study streak
+       🗓️  Month Master     — 30-day study streak
+       ⌨️  Typing Veteran   — Complete 50 typing tests
+       🌟 Perfectionist    — Score 100% accuracy in a typing test
+       💎 Diamond Focus    — Study 10+ hours total
+
+4. BACKEND — Achievements Model  [NEW: app/models/achievements.py]
+   - UserAchievement: {user_id, achievement_id, unlocked_at}
+   - AchievementDef: {id, title, description, icon, condition}
+
+5. BACKEND — Subjects API  [NEW: app/api/subjects.py]
+   - GET    /api/subjects      → list user's subjects
+   - POST   /api/subjects      → create subject {name, color, icon}
+   - DELETE /api/subjects/:id  → delete a subject
+   - Subjects are optional tags for study sessions
+
+6. BACKEND — Update Sessions Model  [MODIFY: app/models/user.py]
+   - Add optional field: subject_id (str | None) to StudySession
+   - Add optional field: subject_id to StudySessionCreate
+
+7. BACKEND — Update Sessions API  [MODIFY: app/api/sessions.py]
+   - Accept optional subject_id on POST /api/sessions
+   - Include subject_id in GET responses
+
+8. BACKEND — Leaderboard API  [NEW: app/api/leaderboard.py]
+   - GET /api/leaderboard/weekly → top 10 users this week by sessions
+     Returns: [{username, sessions_count, total_minutes, rank}]
+   - GET /api/leaderboard/typing → top 10 users by best WPM
+     Returns: [{username, best_wpm, rank}]
+
+9. BACKEND — Wire All Routers  [MODIFY: app/main.py]
+   - Include goals.router at /api/goals
+   - Include achievements.router at /api/achievements
+   - Include subjects.router at /api/subjects
+   - Include leaderboard.router at /api/leaderboard
+
+10. FRONTEND — Daily Goal Widget  [MODIFY: dashboard_screen.dart]
+    - Circular progress ring: "3/4 sessions today"
+    - Current streak display: "🔥 5 day streak"
+    - Tap to navigate to Settings to change goal
+
+11. FRONTEND — Achievements Screen  [NEW: achievements_screen.dart]
+    - Grid of badge cards (locked = greyed out, unlocked = colorful)
+    - Unlocked badges show date earned
+    - Animated unlock effect for newly earned badges
+    - Accessible from Profile screen via "🏆 Achievements" button
+
+12. FRONTEND — Custom Timer Settings  [MODIFY: study_screen.dart]
+    - Allow users to pick focus duration (15/25/30/45/60 min)
+    - Allow users to pick break duration (5/10/15 min)
+    - Save preferences locally with SharedPreferences
+    - Send actual duration_minutes to POST /api/sessions
+
+13. FRONTEND — Subject Tags  [MODIFY: study_screen.dart]
+    - Subject selector chip row above the timer
+    - Create new subjects via "+" chip → bottom sheet
+    - Selected subject sent with POST /api/sessions
+    - Subject-colored ring on the timer
+
+14. FRONTEND — Leaderboard Screen  [NEW: leaderboard_screen.dart]
+    - Two tabs: "📚 Study" and "⌨️ Typing"
+    - Study tab: weekly leaderboard by sessions
+    - Typing tab: all-time best WPM leaderboard
+    - Top 3 highlighted with gold/silver/bronze
+    - Current user's row highlighted
+    - Accessible from Dashboard via new "🏅 Leaderboard" action card
+
+15. FRONTEND — Settings Screen  [NEW: settings_screen.dart]
+    - Daily Goal: slider to set target (1–10 sessions)
+    - Timer Defaults: focus + break duration pickers
+    - App Info: version, clear cache, logout
+    - Accessible from Profile screen via gear icon
+
+16. FRONTEND — Profile Enhancements  [MODIFY: profile_screen.dart]
+    - Add "🏆 Achievements" button → opens achievements screen
+    - Add "⚙️ Settings" icon in app bar → opens settings screen
+    - Show current streak + total sessions in profile card
+    - Update version display to "v3.0.0 (Level 3)"
+
+17. FRONTEND — Dashboard Enhancements  [MODIFY: dashboard_screen.dart]
+    - Add Daily Goal progress ring in the banner area
+    - Add "🏅 Leaderboard" action card alongside Pomodoro/Typing
+    - Show streak count with fire emoji
+    - Achievement unlocked toast on dashboard load (if new badges)
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend (via /docs Swagger):
+    - PUT /api/goals with {daily_target: 4} → goal saved
+    - GET /api/goals/today → correct sessions vs target
+    - GET /api/achievements → all badges, first one unlocked
+    - POST /api/subjects → create "Mathematics" subject
+    - POST /api/sessions with subject_id → linked to subject
+    - GET /api/leaderboard/weekly → top users ranked
+    - GET /api/leaderboard/typing → top WPM ranked
+
+  Frontend:
+    - Dashboard shows "3/4 sessions today" ring + streak
+    - Complete Pomodoro → achievement toast if new badge
+    - Achievements screen → unlocked badges colorful, locked greyed
+    - Custom timer → pick 45min focus → timer starts at 45:00
+    - Subject tags → select "Physics" → session saved with subject
+    - Leaderboard → shows ranked users, current user highlighted
+    - Settings → change daily goal → dashboard updates
+    - Profile → shows streak, achievements button works
+
+===================================================

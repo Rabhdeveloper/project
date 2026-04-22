@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.api import auth
+from app.api import auth, sessions, typing
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Smart Study & Productivity Tracker API",
     description="Backend API for real-time tracking of study sessions and typing practice.",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -30,6 +30,8 @@ app.add_middleware(
 
 # Include Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(sessions.router, prefix="/api/sessions", tags=["Study Sessions"])
+app.include_router(typing.router, prefix="/api/typing", tags=["Typing Results"])
 
 @app.get("/")
 async def root():

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class StudyScreen extends StatefulWidget {
   const StudyScreen({super.key});
@@ -21,6 +22,7 @@ class _StudyScreenState extends State<StudyScreen>
   int _sessionsCompleted = 0;
   Timer? _timer;
   late AnimationController _pulseController;
+  final _apiService = ApiService();
 
   @override
   void initState() {
@@ -71,6 +73,9 @@ class _StudyScreenState extends State<StudyScreen>
   void _onTimerComplete() {
     _timer?.cancel();
     _pulseController.stop();
+
+    final wasStudyMode = _isStudyMode;
+
     setState(() {
       _isRunning = false;
       if (_isStudyMode) _sessionsCompleted++;
@@ -78,6 +83,11 @@ class _StudyScreenState extends State<StudyScreen>
       _secondsRemaining =
           _isStudyMode ? _studyDuration : _breakDuration;
     });
+
+    // Save completed study session to backend
+    if (wasStudyMode) {
+      _saveSession();
+    }
 
     // Show completion notification
     if (mounted) {
@@ -92,6 +102,44 @@ class _StudyScreenState extends State<StudyScreen>
           duration: const Duration(seconds: 3),
         ),
       );
+    }
+  }
+
+  Future<void> _saveSession() async {
+    try {
+      await _apiService.client.post(
+        '/api/sessions',
+        data: {
+          'duration_minutes': 25,
+          'session_type': 'focus',
+        },
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text('Session saved! ✅'),
+              ],
+            ),
+            backgroundColor: Color(0xFF10B981),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Don't block the timer flow — just show a subtle warning
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('⚠️ Could not save session'),
+            backgroundColor: Colors.orange.shade700,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 

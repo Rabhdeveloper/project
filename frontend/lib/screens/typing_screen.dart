@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/api_service.dart';
 
 class TypingScreen extends StatefulWidget {
   const TypingScreen({super.key});
@@ -26,9 +27,11 @@ class _TypingScreenState extends State<TypingScreen> {
   late String _targetText;
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  final _apiService = ApiService();
 
   bool _isStarted = false;
   bool _isFinished = false;
+  bool _isSaved = false;
   int _elapsedSeconds = 0;
   Timer? _timer;
 
@@ -90,8 +93,29 @@ class _TypingScreenState extends State<TypingScreen> {
         _timer?.cancel();
         // Vibrate on finish
         HapticFeedback.mediumImpact();
+        // Save to backend
+        _saveTypingResult();
       }
     });
+  }
+
+  Future<void> _saveTypingResult() async {
+    try {
+      await _apiService.client.post(
+        '/api/typing',
+        data: {
+          'wpm': _wpm,
+          'accuracy': double.parse(_accuracy.toStringAsFixed(1)),
+          'duration_seconds': _elapsedSeconds,
+        },
+      );
+      if (mounted) {
+        setState(() => _isSaved = true);
+      }
+    } catch (e) {
+      // Don't break the results flow
+      debugPrint('Failed to save typing result: $e');
+    }
   }
 
   void _restart() {
@@ -101,6 +125,7 @@ class _TypingScreenState extends State<TypingScreen> {
       _loadNewPassage();
       _isStarted = false;
       _isFinished = false;
+      _isSaved = false;
       _elapsedSeconds = 0;
       _correctChars = 0;
       _errorChars = 0;
@@ -340,7 +365,34 @@ class _TypingScreenState extends State<TypingScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 12),
+
+          // ── Saved Badge ──────────────────────────────────────────────────
+          if (_isSaved)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.cloud_done_rounded, color: Color(0xFF10B981), size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'Saved ✅',
+                    style: TextStyle(
+                      color: Color(0xFF10B981),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 28),
 
           // ── Results Grid ───────────────────────────────────────────────────
           Row(

@@ -1,0 +1,182 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 2 UPDATES
+  Data-Driven Architecture (MongoDB Persistence + Real Analytics)
+  Date: 2026-04-22
+===================================================================
+
+GOAL:
+  Make the app data-driven. All user actions (study sessions,
+  typing results) are now saved to MongoDB. Dashboard and Stats
+  screens show real data from the database instead of hardcoded
+  values. Added input validation on both backend and frontend.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. STUDY SESSIONS API
+   ├── File: backend/app/api/sessions.py             [NEW]
+   ├── POST /api/sessions        → save completed Pomodoro session
+   │   └── Stores: user_id, duration_minutes, session_type, created_at
+   ├── GET  /api/sessions        → list all sessions for user (newest first)
+   ├── GET  /api/sessions/weekly → last 7 days grouped by day
+   │   ├── Returns array of 7 objects: { date, count, total_minutes }
+   │   └── Missing days filled with zeros
+   └── GET  /api/sessions/stats  → aggregated totals
+       ├── total_sessions, total_hours
+       ├── best_day (date with most sessions)
+       └── best_day_count
+   └── MongoDB collection: "study_sessions"
+
+2. TYPING RESULTS API
+   ├── File: backend/app/api/typing.py               [NEW]
+   ├── POST /api/typing          → save typing test result
+   │   └── Stores: user_id, wpm, accuracy, duration_seconds, created_at
+   ├── GET  /api/typing          → list all results for user (newest first)
+   └── GET  /api/typing/best     → personal best & averages
+       ├── best_wpm, average_wpm
+       ├── average_accuracy
+       └── total_tests
+   └── MongoDB collection: "typing_results"
+
+3. WIRE ROUTERS INTO MAIN APP
+   ├── File: backend/app/main.py                     [MODIFIED]
+   ├── Added: from app.api import sessions, typing
+   ├── app.include_router(sessions.router, prefix="/api/sessions")
+   ├── app.include_router(typing.router, prefix="/api/typing")
+   └── Updated version to 2.0.0
+
+4. DATA MODELS FOR SESSIONS & TYPING
+   ├── File: backend/app/models/user.py              [MODIFIED]
+   │
+   ├── ADDED — StudySessionCreate model:
+   │   ├── duration_minutes: int (gt=0)
+   │   └── session_type: str (validated: "focus" or "break")
+   │
+   ├── ADDED — StudySession model:
+   │   ├── id, user_id, duration_minutes, session_type, created_at
+   │   └── Config: populate_by_name = True
+   │
+   ├── ADDED — StudySessionResponse model:
+   │   └── id, duration_minutes, session_type, created_at
+   │
+   ├── ADDED — TypingResultCreate model:
+   │   ├── wpm: int (gt=0)
+   │   ├── accuracy: float (0–100)
+   │   └── duration_seconds: int (gt=0)
+   │
+   ├── ADDED — TypingResult model:
+   │   ├── id, user_id, wpm, accuracy, duration_seconds, created_at
+   │   └── Config: populate_by_name = True
+   │
+   ├── ADDED — TypingResultResponse model:
+   │   └── id, wpm, accuracy, duration_seconds, created_at
+   │
+   └── ADDED — Input Validators on UserCreate:
+       ├── @field_validator("username") → min 3 characters
+       └── @field_validator("password") → min 6 characters
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+5. STUDY SCREEN — DATA PERSISTENCE
+   ├── File: frontend/lib/screens/study_screen.dart   [MODIFIED]
+   ├── On Pomodoro completion → POST /api/sessions
+   │   └── Sends: { duration_minutes, session_type }
+   ├── Shows "Session saved! ✅" toast on success
+   ├── Records saved to MongoDB via API
+   └── Error handling with snackbar notifications
+
+6. TYPING SCREEN — DATA PERSISTENCE
+   ├── File: frontend/lib/screens/typing_screen.dart  [MODIFIED]
+   ├── On test completion → POST /api/typing
+   │   └── Sends: { wpm, accuracy, duration_seconds }
+   ├── Shows "Saved ✅" badge on results overlay
+   ├── Records saved to MongoDB via API
+   └── Error handling with snackbar notifications
+
+7. DASHBOARD SCREEN — LIVE DATA
+   ├── File: frontend/lib/screens/dashboard_screen.dart [MODIFIED]
+   ├── Fetches GET /api/auth/me → shows real username in greeting
+   ├── Fetches GET /api/sessions/weekly → real bar chart data
+   │   └── Replaced hardcoded chart with live 7-day data
+   ├── Fetches GET /api/sessions/stats → stat chips
+   │   └── Total Sessions, Total Hours displayed from DB
+   ├── Added loading skeleton while data loads
+   └── Pull-to-refresh to reload all data
+
+8. STATS SCREEN
+   ├── File: frontend/lib/screens/stats_screen.dart   [NEW]
+   ├── 5th tab in bottom navigation bar (📊 icon)
+   ├── Study Tab:
+   │   ├── Bar chart: sessions per day (last 7 days)
+   │   ├── Total study hours
+   │   └── Best streak day
+   ├── Typing Tab:
+   │   ├── Line chart: WPM over time
+   │   ├── Best WPM record
+   │   └── Average accuracy percentage
+   └── History List:
+       └── Last 10 sessions with timestamps
+
+9. REGISTER SCREEN — INPUT VALIDATION
+   ├── File: frontend/lib/screens/register_screen.dart [MODIFIED]
+   ├── Username validation: min 3 characters
+   ├── Email validation: valid format check
+   ├── Password validation: min 6 characters
+   ├── Inline error messages below each field
+   │   └── Not just snackbar — real-time field-level errors
+   └── Form validation before API call
+
+===================================================================
+  DATABASE CHANGES (MongoDB Collections)
+===================================================================
+
+  NEW COLLECTION: "study_sessions"
+  ├── _id: string (UUID)
+  ├── user_id: string (references users._id)
+  ├── duration_minutes: int
+  ├── session_type: string ("focus" | "break")
+  └── created_at: datetime
+
+  NEW COLLECTION: "typing_results"
+  ├── _id: string (UUID)
+  ├── user_id: string (references users._id)
+  ├── wpm: int
+  ├── accuracy: float
+  ├── duration_seconds: int
+  └── created_at: datetime
+
+===================================================================
+  API ENDPOINTS ADDED AT LEVEL 2
+===================================================================
+
+  | Method | Endpoint                | Description                    |
+  |--------|-------------------------|--------------------------------|
+  | POST   | /api/sessions           | Save completed study session    |
+  | GET    | /api/sessions           | List all sessions for user      |
+  | GET    | /api/sessions/weekly    | Last 7 days grouped by day      |
+  | GET    | /api/sessions/stats     | Aggregated study stats           |
+  | POST   | /api/typing             | Save typing test result          |
+  | GET    | /api/typing             | List all typing results          |
+  | GET    | /api/typing/best        | Personal best + averages         |
+
+===================================================================
+  SUMMARY — FILES CHANGED AT LEVEL 2
+===================================================================
+
+  NEW FILES (3):
+    backend/app/api/sessions.py        — Study Sessions CRUD API
+    backend/app/api/typing.py          — Typing Results CRUD API
+    frontend/lib/screens/stats_screen.dart — Statistics dashboard
+
+  MODIFIED FILES (5):
+    backend/app/main.py                — Wired new routers
+    backend/app/models/user.py         — Added session/typing models + validators
+    frontend/lib/screens/study_screen.dart    — POST sessions on completion
+    frontend/lib/screens/typing_screen.dart   — POST typing results on completion
+    frontend/lib/screens/dashboard_screen.dart — Live data from API
+    frontend/lib/screens/register_screen.dart  — Inline form validation
+
+===================================================================

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import 'study_screen.dart';
 import 'typing_screen.dart';
+import 'stats_screen.dart';
 import 'profile_screen.dart';
 
 class MainLayout extends StatefulWidget {
@@ -33,6 +34,7 @@ class _MainLayoutState extends State<MainLayout> {
       DashboardScreen(onNavigate: _navigateTo),
       const StudyScreen(),
       const TypingScreen(),
+      const StatsScreen(),
       const ProfileScreen(),
     ];
 
@@ -76,6 +78,11 @@ class _MainLayoutState extends State<MainLayout> {
               icon: Icon(Icons.keyboard_outlined),
               activeIcon: Icon(Icons.keyboard_rounded, size: 28),
               label: 'Typing',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_rounded),
+              activeIcon: Icon(Icons.bar_chart_rounded, size: 28),
+              label: 'Stats',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),

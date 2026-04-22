@@ -1,0 +1,195 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 1 UPDATES
+  Foundation & Core Features (Client-Side)
+  Date: 2026-04-21
+===================================================================
+
+GOAL:
+  Build the foundational app with authentication, user profile,
+  and client-side study tools (Pomodoro timer + typing practice).
+  Everything runs locally — no data is persisted to the database
+  except user accounts.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. PROJECT SETUP
+   ├── Created FastAPI backend project
+   ├── File: backend/app/main.py
+   ├── FastAPI app with CORS middleware (allow all origins)
+   ├── Lifespan events: connect/disconnect MongoDB via Motor
+   ├── Root endpoint: GET / → welcome message
+   └── Health check: GET /health → { status: healthy }
+
+2. DATABASE LAYER
+   ├── File: backend/app/core/database.py          [NEW]
+   ├── Motor (async MongoDB driver) client setup
+   ├── connect_to_mongo() / close_mongo_connection()
+   └── get_database() dependency for route injection
+
+3. CONFIGURATION
+   ├── File: backend/app/core/config.py             [NEW]
+   ├── Settings class with env-var support (.env)
+   ├── MONGODB_URL (default: localhost:27017)
+   ├── DATABASE_NAME (default: smart_study_db)
+   ├── SECRET_KEY for JWT signing
+   ├── ALGORITHM: HS256
+   └── ACCESS_TOKEN_EXPIRE_MINUTES: 7 days
+
+4. SECURITY / JWT
+   ├── File: backend/app/core/security.py           [NEW]
+   ├── Password hashing with passlib + bcrypt
+   ├── verify_password() / get_password_hash()
+   ├── create_access_token() with expiry
+   └── decode_access_token() with error handling
+
+5. USER MODEL
+   ├── File: backend/app/models/user.py             [NEW]
+   ├── UserBase (username, email)
+   ├── UserCreate (+ password)
+   ├── UserInDB (+ hashed_password, _id, created_at)
+   ├── UserUpdate (optional username)
+   └── UserResponse (id, username, email, created_at)
+
+6. AUTH API
+   ├── File: backend/app/api/auth.py                [NEW]
+   ├── POST /api/auth/register  → create user, hash password, return UserResponse
+   ├── POST /api/auth/token     → login via OAuth2 form, return JWT
+   ├── GET  /api/auth/me        → return authenticated user profile
+   ├── PUT  /api/auth/me        → update username for authenticated user
+   └── get_current_user() dependency (decode JWT → fetch user from DB)
+
+7. DEPENDENCIES (requirements.txt)
+   ├── fastapi, uvicorn[standard]
+   ├── motor (async MongoDB)
+   ├── redis[hiredis] (for future use)
+   ├── pyjwt, passlib[bcrypt]
+   ├── python-dotenv
+   ├── pydantic, email-validator
+   └── File: backend/requirements.txt               [NEW]
+
+8. DOCKER COMPOSE
+   ├── File: docker-compose.yml                     [NEW]
+   ├── MongoDB service (port 27017, persistent volume)
+   └── Redis service (port 6379, persistent volume)
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+9. FLUTTER PROJECT SETUP
+   ├── File: frontend/lib/main.dart                 [NEW]
+   ├── Material 3 dark theme (Slate/Indigo/Emerald palette)
+   ├── Custom AppBar, Card, BottomNav themes
+   ├── AuthGate widget: checks SharedPreferences for JWT
+   └── Routes to LoginScreen or MainLayout
+
+10. API SERVICE
+    ├── File: frontend/lib/services/api_service.dart [NEW]
+    ├── Dio HTTP client with base URL (localhost:8000)
+    ├── Request interceptor: auto-attaches JWT from SharedPreferences
+    └── Timeout: 10s connect, 10s receive
+
+11. LOGIN SCREEN
+    ├── File: frontend/lib/screens/login_screen.dart [NEW]
+    ├── Email + Password fields
+    ├── Calls POST /api/auth/token
+    ├── Saves JWT to SharedPreferences on success
+    ├── Navigate to Register link
+    └── Snackbar error handling
+
+12. REGISTER SCREEN
+    ├── File: frontend/lib/screens/register_screen.dart [NEW]
+    ├── Username + Email + Password fields
+    ├── Calls POST /api/auth/register
+    ├── Auto-login after registration
+    └── Navigate back to Login link
+
+13. MAIN LAYOUT (Bottom Navigation)
+    ├── File: frontend/lib/screens/main_layout.dart  [NEW]
+    ├── 5-tab bottom navigation bar
+    │   ├── 🏠 Dashboard
+    │   ├── ⏱ Study (Pomodoro)
+    │   ├── ⌨ Typing
+    │   ├── 📊 Stats (placeholder at this level)
+    │   └── 👤 Profile
+    ├── AnimatedSwitcher for smooth tab transitions
+    └── onNavigate callback for Dashboard action cards
+
+14. DASHBOARD SCREEN
+    ├── File: frontend/lib/screens/dashboard_screen.dart [NEW]
+    ├── Greeting header with username
+    ├── Quick-action cards (Study, Typing, Stats, Profile)
+    ├── Action cards navigate to respective tabs
+    └── Hardcoded chart/stats at this level
+
+15. POMODORO STUDY TIMER
+    ├── File: frontend/lib/screens/study_screen.dart [NEW]
+    ├── 25-min focus / 5-min break timer (client-side)
+    ├── Start / Pause / Reset controls
+    ├── Circular progress indicator
+    ├── Session type toggle (Focus / Break)
+    └── Timer runs locally — no data saved to DB yet
+
+16. TYPING PRACTICE TEST
+    ├── File: frontend/lib/screens/typing_screen.dart [NEW]
+    ├── Random paragraph displayed for typing
+    ├── Real-time character-by-character feedback
+    ├── WPM + Accuracy calculation
+    ├── Results overlay on completion
+    └── Runs locally — no data saved to DB yet
+
+17. PROFILE SCREEN
+    ├── File: frontend/lib/screens/profile_screen.dart [NEW]
+    ├── Fetches user data via GET /api/auth/me
+    ├── Displays username, email, join date
+    ├── Edit username (calls PUT /api/auth/me)
+    ├── Logout button (clears JWT, navigates to login)
+    └── Avatar with initials
+
+18. FLUTTER DEPENDENCIES (pubspec.yaml)
+    ├── provider (state management)
+    ├── shared_preferences (local JWT storage)
+    ├── dio (HTTP client)
+    ├── fl_chart (charts library — for future use)
+    └── web_socket_channel (for future use)
+
+===================================================================
+  INFRASTRUCTURE
+===================================================================
+
+19. STARTUP SCRIPTS
+    ├── File: start.sh     [NEW]  — macOS/Linux launcher
+    └── File: start.bat    [NEW]  — Windows launcher
+
+===================================================================
+  SUMMARY — FILES CREATED AT LEVEL 1
+===================================================================
+
+  BACKEND (7 files):
+    backend/app/main.py
+    backend/app/core/config.py
+    backend/app/core/database.py
+    backend/app/core/security.py
+    backend/app/models/user.py
+    backend/app/api/auth.py
+    backend/requirements.txt
+
+  FRONTEND (8 files):
+    frontend/lib/main.dart
+    frontend/lib/services/api_service.dart
+    frontend/lib/screens/login_screen.dart
+    frontend/lib/screens/register_screen.dart
+    frontend/lib/screens/main_layout.dart
+    frontend/lib/screens/dashboard_screen.dart
+    frontend/lib/screens/study_screen.dart
+    frontend/lib/screens/typing_screen.dart
+    frontend/lib/screens/profile_screen.dart
+
+  ROOT (3 files):
+    docker-compose.yml
+    start.sh
+    start.bat
+
+===================================================================

@@ -1,0 +1,117 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 1 PLAN
+  Saved: 2026-04-21
+===================================================
+
+LEVEL 1 GOAL: Build the foundation.
+  Auth system, core screens, client-side tools,
+  and a working navigation shell.
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+1. BACKEND — Project Setup
+   - FastAPI app with uvicorn
+   - MongoDB via Motor (async driver)
+   - CORS middleware (allow all origins)
+   - Health check endpoint: GET /health
+   - Docker Compose for MongoDB
+
+2. BACKEND — Auth API  [NEW: app/api/auth.py]
+   - POST /api/auth/register  → create user (username, email, password)
+   - POST /api/auth/token     → login (OAuth2 form, returns JWT)
+   - GET  /api/auth/me        → get current user profile (Bearer token)
+   - PUT  /api/auth/me        → update username
+
+3. BACKEND — User Model  [NEW: app/models/user.py]
+   - UserCreate, UserResponse, UserInDB, UserUpdate
+   - Hashed passwords via passlib + bcrypt
+   - JWT tokens via PyJWT (HS256, 7-day expiry)
+
+4. BACKEND — Core Modules
+   - config.py  → Settings (MONGODB_URL, SECRET_KEY, ALGORITHM)
+   - database.py → Motor client connect/close, get_database()
+   - security.py → hash/verify password, create/decode JWT
+
+5. FRONTEND — Project Setup
+   - Flutter app with Material 3
+   - Dark theme (Slate 900 bg, Indigo primary, Emerald secondary)
+   - Dependencies: dio, shared_preferences, fl_chart, provider
+
+6. FRONTEND — Login Screen  [NEW: login_screen.dart]
+   - Email + password fields
+   - Sign In button → POST /api/auth/token
+   - Save JWT to SharedPreferences
+   - Navigate to MainLayout on success
+   - Link to Register screen
+
+7. FRONTEND — Register Screen  [NEW: register_screen.dart]
+   - Username, email, password fields
+   - Sign Up button → POST /api/auth/register
+   - Navigate back to Login on success
+
+8. FRONTEND — Auth Gate  [NEW: main.dart]
+   - Check SharedPreferences for jwt_token on app start
+   - If token exists → MainLayout
+   - If no token → LoginScreen
+
+9. FRONTEND — API Service  [NEW: services/api_service.dart]
+   - Dio client with baseUrl (localhost:8000)
+   - Request interceptor: auto-attach Bearer token
+   - 10s connect/receive timeout
+
+10. FRONTEND — Main Layout  [NEW: main_layout.dart]
+    - Bottom nav: Dashboard, Study, Typing, Profile
+    - AnimatedSwitcher for tab transitions
+    - Navigation callback for cross-tab linking
+
+11. FRONTEND — Dashboard Screen  [NEW: dashboard_screen.dart]
+    - Greeting banner with Smart Insight
+    - Weekly Focus line chart (hardcoded data)
+    - Quick Action cards: Start Pomodoro, Typing Test
+    - Action cards navigate to Study/Typing tabs
+
+12. FRONTEND — Study Timer Screen  [NEW: study_screen.dart]
+    - Pomodoro timer: 25min focus / 5min break
+    - Circular progress ring with pulsing glow animation
+    - Start/Pause, Reset, Skip controls
+    - Mode toggle: Focus ↔ Break
+    - Sessions counter + total focus time display
+
+13. FRONTEND — Typing Practice Screen  [NEW: typing_screen.dart]
+    - 7 sample passages (random selection)
+    - Live character-by-character coloring (green/red)
+    - Real-time WPM, accuracy, elapsed time stats
+    - Progress bar
+    - Results view: grade badge, WPM, accuracy, errors
+    - Try Again button with new passage
+
+14. FRONTEND — Profile Screen  [NEW: profile_screen.dart]
+    - Avatar with initials (gradient circle)
+    - Username (editable inline) + email display
+    - Member ID, Member Since, Email info cards
+    - Edit mode: text field + save button → PUT /api/auth/me
+    - App version display
+    - Logout button with confirmation dialog
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend:
+    - POST /api/auth/register → 201 user created
+    - POST /api/auth/token → JWT returned
+    - GET  /api/auth/me with Bearer → user profile
+    - PUT  /api/auth/me → username updated
+
+  Frontend:
+    - Register → success snackbar → back to login
+    - Login → JWT saved → MainLayout shown
+    - Dashboard → chart renders, action cards navigate
+    - Study → timer counts down, mode switches
+    - Typing → text colors live, results show on complete
+    - Profile → loads real data, edit username works
+    - Logout → token cleared → back to login
+    - Restart app → auto-login if token exists
+
+===================================================
