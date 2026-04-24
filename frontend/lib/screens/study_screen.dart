@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
 class StudyScreen extends StatefulWidget {
@@ -12,25 +13,36 @@ class StudyScreen extends StatefulWidget {
 class _StudyScreenState extends State<StudyScreen>
     with SingleTickerProviderStateMixin {
   // ── Timer config ────────────────────────────────────────────────────────────
-  static const int _studyDuration = 25 * 60; // 25 minutes in seconds
-  static const int _breakDuration = 5 * 60;  // 5 minutes in seconds
+  static const List<int> _focusOptions = [15, 25, 30, 45, 60];
+  static const List<int> _breakOptions = [5, 10, 15];
+
+  int _focusMinutes = 25;
+  int _breakMinutes = 5;
 
   // ── State ────────────────────────────────────────────────────────────────────
   bool _isStudyMode = true;
   bool _isRunning = false;
-  int _secondsRemaining = _studyDuration;
+  late int _secondsRemaining;
   int _sessionsCompleted = 0;
   Timer? _timer;
   late AnimationController _pulseController;
   final _apiService = ApiService();
 
+  // ── Subjects ─────────────────────────────────────────────────────────────────
+  List<Map<String, dynamic>> _subjects = [];
+  String? _selectedSubjectId;
+  String? _selectedSubjectColor;
+
   @override
   void initState() {
     super.initState();
+    _secondsRemaining = _focusMinutes * 60;
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
+    _loadPreferences();
+    _loadSubjects();
   }
 
   @override
@@ -38,6 +50,34 @@ class _StudyScreenState extends State<StudyScreen>
     _timer?.cancel();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final focus = prefs.getInt('focus_duration') ?? 25;
+    final breakD = prefs.getInt('break_duration') ?? 5;
+    if (mounted) {
+      setState(() {
+        _focusMinutes = focus;
+        _breakMinutes = breakD;
+        if (!_isRunning) {
+          _secondsRemaining = _isStudyMode ? _focusMinutes * 60 : _breakMinutes * 60;
+        }
+      });
+    }
+  }
+
+  Future<void> _loadSubjects() async {
+    try {
+      final response = await _apiService.client.get('/api/subjects');
+      if (mounted) {
+        setState(() {
+          _subjects = List<Map<String, dynamic>>.from(response.data);
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load subjects: $e');
+    }
   }
 
   // ── Controls ─────────────────────────────────────────────────────────────────
@@ -66,7 +106,7 @@ class _StudyScreenState extends State<StudyScreen>
     setState(() {
       _isRunning = false;
       _secondsRemaining =
-          _isStudyMode ? _studyDuration : _breakDuration;
+          _isStudyMode ? _focusMinutes * 60 : _breakMinutes * 60;
     });
   }
 
@@ -81,7 +121,7 @@ class _StudyScreenState extends State<StudyScreen>
       if (_isStudyMode) _sessionsCompleted++;
       _isStudyMode = !_isStudyMode;
       _secondsRemaining =
-          _isStudyMode ? _studyDuration : _breakDuration;
+          _isStudyMode ? _focusMinutes * 60 : _breakMinutes * 60;
     });
 
     // Save completed study session to backend
@@ -110,10 +150,41 @@ class _StudyScreenState extends State<StudyScreen>
       await _apiService.client.post(
         '/api/sessions',
         data: {
-          'duration_minutes': 25,
+          'duration_minutes': _focusMinutes,
           'session_type': 'focus',
+          if (_selectedSubjectId != null) 'subject_id': _selectedSubjectId,
         },
       );
+
+      // Also check achievements after each session
+      try {
+        final checkResponse =
+            await _apiService.client.post('/api/achievements/check');
+        final newlyUnlocked = checkResponse.data['newly_unlocked'] as List? ?? [];
+        if (newlyUnlocked.isNotEmpty && mounted) {
+          for (final badge in newlyUnlocked) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Text(badge['icon'] ?? '🏆', style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Achievement Unlocked: ${badge['title']}!',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFFF59E0B),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      } catch (_) {}
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -150,8 +221,174 @@ class _StudyScreenState extends State<StudyScreen>
       _isRunning = false;
       _isStudyMode = toStudy;
       _secondsRemaining =
-          _isStudyMode ? _studyDuration : _breakDuration;
+          _isStudyMode ? _focusMinutes * 60 : _breakMinutes * 60;
     });
+  }
+
+  void _setFocusDuration(int minutes) {
+    if (_isRunning) return;
+    setState(() {
+      _focusMinutes = minutes;
+      if (_isStudyMode) _secondsRemaining = minutes * 60;
+    });
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt('focus_duration', minutes);
+    });
+  }
+
+  void _setBreakDuration(int minutes) {
+    if (_isRunning) return;
+    setState(() {
+      _breakMinutes = minutes;
+      if (!_isStudyMode) _secondsRemaining = minutes * 60;
+    });
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt('break_duration', minutes);
+    });
+  }
+
+  void _showCreateSubjectSheet() {
+    final nameController = TextEditingController();
+    final colors = [
+      '#6366F1', '#10B981', '#F59E0B', '#EF4444', '#3B82F6',
+      '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
+    ];
+    final icons = ['📖', '🧮', '🔬', '🌍', '🎨', '📐', '💻', '🎵', '📝', '🧪'];
+    String selectedColor = colors[0];
+    String selectedIcon = icons[0];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'New Subject',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Subject Name',
+                    hintText: 'e.g. Mathematics',
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Icon', style: TextStyle(fontSize: 13)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: icons.map((icon) {
+                    final sel = selectedIcon == icon;
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => selectedIcon = icon),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: sel
+                              ? const Color(0xFF6366F1).withOpacity(0.2)
+                              : const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: sel
+                                ? const Color(0xFF6366F1)
+                                : Colors.transparent,
+                          ),
+                        ),
+                        child: Center(child: Text(icon, style: const TextStyle(fontSize: 20))),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                const Text('Color', style: TextStyle(fontSize: 13)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: colors.map((hex) {
+                    final color = Color(int.parse(hex.replaceFirst('#', '0xFF')));
+                    final sel = selectedColor == hex;
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => selectedColor = hex),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: sel ? Colors.white : Colors.transparent,
+                            width: 2.5,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6366F1),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () async {
+                      final name = nameController.text.trim();
+                      if (name.isEmpty) return;
+                      try {
+                        await _apiService.client.post('/api/subjects', data: {
+                          'name': name,
+                          'color': selectedColor,
+                          'icon': selectedIcon,
+                        });
+                        Navigator.of(ctx).pop();
+                        _loadSubjects();
+                      } catch (e) {
+                        debugPrint('Failed to create subject: $e');
+                      }
+                    },
+                    child: const Text(
+                      'Create Subject',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -163,12 +400,19 @@ class _StudyScreenState extends State<StudyScreen>
   }
 
   double get _progress {
-    final total = _isStudyMode ? _studyDuration : _breakDuration;
+    final total = _isStudyMode ? _focusMinutes * 60 : _breakMinutes * 60;
     return 1.0 - (_secondsRemaining / total);
   }
 
-  Color get _modeColor =>
-      _isStudyMode ? const Color(0xFF6366F1) : const Color(0xFF10B981);
+  Color get _modeColor {
+    if (_selectedSubjectColor != null && _isStudyMode) {
+      try {
+        return Color(
+            int.parse(_selectedSubjectColor!.replaceFirst('#', '0xFF')));
+      } catch (_) {}
+    }
+    return _isStudyMode ? const Color(0xFF6366F1) : const Color(0xFF10B981);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,10 +421,75 @@ class _StudyScreenState extends State<StudyScreen>
         title: const Text('Study Timer'),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Column(
             children: [
+              // ── Subject Tags ──────────────────────────────────────────────
+              if (_subjects.isNotEmpty || true)
+                SizedBox(
+                  height: 42,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      // Existing subjects
+                      ..._subjects.map((subj) {
+                        final id = subj['id'] as String;
+                        final name = subj['name'] as String;
+                        final icon = subj['icon'] as String? ?? '📖';
+                        final colorHex = subj['color'] as String? ?? '#6366F1';
+                        final isSelected = _selectedSubjectId == id;
+                        Color chipColor;
+                        try {
+                          chipColor = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+                        } catch (_) {
+                          chipColor = const Color(0xFF6366F1);
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            avatar: Text(icon, style: const TextStyle(fontSize: 16)),
+                            label: Text(name),
+                            selected: isSelected,
+                            selectedColor: chipColor.withOpacity(0.25),
+                            backgroundColor: const Color(0xFF1E293B),
+                            labelStyle: TextStyle(
+                              color: isSelected ? chipColor : Colors.grey[400],
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            side: BorderSide(
+                              color: isSelected ? chipColor : Colors.grey.withOpacity(0.15),
+                            ),
+                            onSelected: (_) {
+                              setState(() {
+                                if (isSelected) {
+                                  _selectedSubjectId = null;
+                                  _selectedSubjectColor = null;
+                                } else {
+                                  _selectedSubjectId = id;
+                                  _selectedSubjectColor = colorHex;
+                                }
+                              });
+                            },
+                          ),
+                        );
+                      }),
+                      // Add new subject chip
+                      ActionChip(
+                        avatar: const Icon(Icons.add, size: 18, color: Color(0xFF6366F1)),
+                        label: const Text('Add'),
+                        backgroundColor: const Color(0xFF1E293B),
+                        labelStyle: const TextStyle(color: Color(0xFF6366F1)),
+                        side: BorderSide(
+                          color: const Color(0xFF6366F1).withOpacity(0.2),
+                        ),
+                        onPressed: _showCreateSubjectSheet,
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 12),
+
               // ── Mode Toggle ────────────────────────────────────────────────
               Container(
                 decoration: BoxDecoration(
@@ -209,7 +518,52 @@ class _StudyScreenState extends State<StudyScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 12),
+
+              // ── Duration Picker Chips ──────────────────────────────────────
+              SizedBox(
+                height: 36,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: (_isStudyMode ? _focusOptions : _breakOptions)
+                      .map((mins) {
+                    final selected = _isStudyMode
+                        ? _focusMinutes == mins
+                        : _breakMinutes == mins;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text('$mins min'),
+                        selected: selected,
+                        selectedColor: _modeColor.withOpacity(0.25),
+                        backgroundColor: const Color(0xFF0F172A),
+                        labelStyle: TextStyle(
+                          color: selected ? _modeColor : Colors.grey[500],
+                          fontWeight:
+                              selected ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 12,
+                        ),
+                        side: BorderSide(
+                          color: selected
+                              ? _modeColor
+                              : Colors.grey.withOpacity(0.15),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        onSelected: _isRunning
+                            ? null
+                            : (_) {
+                                if (_isStudyMode) {
+                                  _setFocusDuration(mins);
+                                } else {
+                                  _setBreakDuration(mins);
+                                }
+                              },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 32),
 
               // ── Circular Progress Timer ────────────────────────────────────
               SizedBox(
@@ -282,7 +636,7 @@ class _StudyScreenState extends State<StudyScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 40),
 
               // ── Controls ───────────────────────────────────────────────────
               Row(
@@ -336,7 +690,7 @@ class _StudyScreenState extends State<StudyScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
 
               // ── Sessions Counter ────────────────────────────────────────────
               Container(
@@ -362,7 +716,7 @@ class _StudyScreenState extends State<StudyScreen>
                     ),
                     _StatItem(
                       label: 'Focus Goal',
-                      value: '4 sessions',
+                      value: '${_focusMinutes}m',
                       icon: Icons.flag_outlined,
                       color: const Color(0xFF6366F1),
                     ),
@@ -373,15 +727,14 @@ class _StudyScreenState extends State<StudyScreen>
                     ),
                     _StatItem(
                       label: 'Total Focus',
-                      value: '${_sessionsCompleted * 25}m',
+                      value: '${_sessionsCompleted * _focusMinutes}m',
                       icon: Icons.timer_outlined,
                       color: const Color(0xFFF59E0B),
                     ),
                   ],
                 ),
               ),
-
-              const Spacer(),
+              const SizedBox(height: 24),
             ],
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
+import 'analytics_screen.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -28,7 +29,7 @@ class _StatsScreenState extends State<StatsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadAllData();
   }
 
@@ -82,6 +83,7 @@ class _StatsScreenState extends State<StatsScreen>
           tabs: const [
             Tab(icon: Icon(Icons.timer_rounded, size: 20), text: 'Study'),
             Tab(icon: Icon(Icons.keyboard_rounded, size: 20), text: 'Typing'),
+            Tab(icon: Icon(Icons.analytics_rounded, size: 20), text: 'Analytics'),
           ],
         ),
       ),
@@ -95,6 +97,7 @@ class _StatsScreenState extends State<StatsScreen>
                 children: [
                   _buildStudyTab(),
                   _buildTypingTab(),
+                  const AnalyticsScreen(),
                 ],
               ),
       ),

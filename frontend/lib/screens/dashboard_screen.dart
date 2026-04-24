@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
+import 'leaderboard_screen.dart';
+import 'notes_screen.dart';
+import 'flashcards_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.onNavigate});
@@ -21,6 +24,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic> _stats = {};
   bool _isLoading = true;
 
+  // Level 4: friend activity + tip
+  List<Map<String, dynamic>> _friendActivity = [];
+  Map<String, dynamic>? _dailyTip;
+
+  // Goal & Streak state
+  int _sessionsDoneToday = 0;
+  int _dailyTarget = 4;
+  int _currentStreak = 0;
+
   @override
   void initState() {
     super.initState();
@@ -30,25 +42,104 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      // Fetch all 3 endpoints in parallel
+      // Fetch all endpoints in parallel
       final results = await Future.wait([
         _apiService.client.get('/api/auth/me'),
         _apiService.client.get('/api/sessions/weekly'),
         _apiService.client.get('/api/sessions/stats'),
+        _apiService.client.get('/api/goals'),
+        _apiService.client.get('/api/goals/today'),
       ]);
 
+      // Load Level 4 data in parallel (non-blocking)
+      _loadFriendActivity();
+      _loadDailyTip();
+
       if (mounted) {
+        final goalData = Map<String, dynamic>.from(results[3].data);
+        final todayData = Map<String, dynamic>.from(results[4].data);
+
         setState(() {
           _username = results[0].data['username'] ?? '';
           _weeklyData = List<Map<String, dynamic>>.from(results[1].data);
           _stats = Map<String, dynamic>.from(results[2].data);
+          _currentStreak = goalData['current_streak'] ?? 0;
+          _dailyTarget = todayData['daily_target'] ?? 4;
+          _sessionsDoneToday = todayData['sessions_done'] ?? 0;
           _isLoading = false;
         });
       }
+
+      // Check achievements in background
+      _checkAchievements();
     } catch (e) {
       debugPrint('Dashboard load error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _loadFriendActivity() async {
+    try {
+      final response = await _apiService.client.get('/api/activity/friends');
+      if (mounted) {
+        setState(() {
+          _friendActivity = List<Map<String, dynamic>>.from(response.data);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadDailyTip() async {
+    try {
+      final response = await _apiService.client.get('/api/tips/daily');
+      if (mounted) {
+        setState(() {
+          _dailyTip = Map<String, dynamic>.from(response.data);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _checkAchievements() async {
+    try {
+      final response =
+          await _apiService.client.post('/api/achievements/check');
+      final newlyUnlocked =
+          response.data['newly_unlocked'] as List? ?? [];
+      if (newlyUnlocked.isNotEmpty && mounted) {
+        for (final badge in newlyUnlocked) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Text(badge['icon'] ?? '🏆',
+                      style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Achievement Unlocked!',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(badge['title'] ?? '',
+                            style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFFF59E0B),
+              duration: const Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+      }
+    } catch (_) {}
   }
 
   // Build chart spots from weekly data
@@ -176,7 +267,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── AI Suggestion Banner ─────────────────────────────────────────
+          // ── Daily Goal + Streak Banner ───────────────────────────────────
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -195,33 +286,101 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.insights_rounded, color: Colors.white, size: 28),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Smart Insight',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
+                // Circular progress ring
+                SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox.expand(
+                        child: CircularProgressIndicator(
+                          value: 1.0,
+                          strokeWidth: 6,
+                          color: Colors.white.withOpacity(0.2),
+                        ),
                       ),
-                    ),
-                  ],
+                      SizedBox.expand(
+                        child: CircularProgressIndicator(
+                          value: _dailyTarget > 0
+                              ? (_sessionsDoneToday / _dailyTarget)
+                                  .clamp(0.0, 1.0)
+                              : 0,
+                          strokeWidth: 6,
+                          color: Colors.white,
+                          strokeCap: StrokeCap.round,
+                        ),
+                      ),
+                      Text(
+                        '$_sessionsDoneToday/$_dailyTarget',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  totalSessions > 0
-                      ? "You've completed $totalSessions sessions totaling ${totalHours}h. Keep the streak going! 🔥"
-                      : "Start your first Pomodoro session and track your progress! 🚀",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _sessionsDoneToday >= _dailyTarget
+                            ? '🎉 Daily Goal Complete!'
+                            : 'Today\'s Progress',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _sessionsDoneToday >= _dailyTarget
+                            ? "You've hit your goal! Keep the streak alive."
+                            : '${_dailyTarget - _sessionsDoneToday} more session${(_dailyTarget - _sessionsDoneToday) != 1 ? 's' : ''} to reach your goal',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('🔥',
+                                    style: TextStyle(fontSize: 14)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$_currentStreak day${_currentStreak != 1 ? 's' : ''}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -365,7 +524,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 32),
 
-          // ── Quick Actions ─────────────────────────────────────────────────
+          // ── Leaderboard Button ──────────────────────────────────────────
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.25)),
+              ),
+              child: Row(
+                children: [
+                  const Text('🏅', style: TextStyle(fontSize: 22)),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text('Leaderboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.grey[500]),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Quick Actions 2x2 Grid ────────────────────────────────────────
           const Text(
             'Quick Actions',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -375,26 +563,133 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Expanded(
                 child: _ActionCard(
-                  title: 'Start Pomodoro',
+                  title: 'Pomodoro',
                   subtitle: 'Focus timer',
                   icon: Icons.timer_rounded,
                   color: const Color(0xFFF59E0B),
-                  onTap: () => widget.onNavigate?.call(1), // Navigate to Study tab
+                  onTap: () => widget.onNavigate?.call(1),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: _ActionCard(
-                  title: 'Typing Test',
-                  subtitle: 'Test your speed',
+                  title: 'Typing',
+                  subtitle: 'Test speed',
                   icon: Icons.keyboard_alt_rounded,
                   color: const Color(0xFF3B82F6),
-                  onTap: () => widget.onNavigate?.call(2), // Navigate to Typing tab
+                  onTap: () => widget.onNavigate?.call(2),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionCard(
+                  title: 'Notes',
+                  subtitle: '📝 Write',
+                  icon: Icons.note_alt_rounded,
+                  color: const Color(0xFF8B5CF6),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const NotesScreen()),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ActionCard(
+                  title: 'Flashcards',
+                  subtitle: '🃏 Review',
+                  icon: Icons.style_rounded,
+                  color: const Color(0xFFEC4899),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const FlashcardsScreen()),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // ── Daily Tip ─────────────────────────────────────────────────────
+          if (_dailyTip != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF8B5CF6).withOpacity(0.15),
+                    const Color(0xFF6366F1).withOpacity(0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Text(_dailyTip!['icon'] ?? '💡', style: const TextStyle(fontSize: 28)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Smart Tip', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[500])),
+                        const SizedBox(height: 4),
+                        Text(_dailyTip!['tip'] ?? '', style: const TextStyle(fontSize: 14, height: 1.4)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // ── Friend Activity ────────────────────────────────────────────────
+          if (_friendActivity.isNotEmpty) ...[
+            const Text(
+              'Friend Activity',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text('Last 24 hours', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+            const SizedBox(height: 12),
+            ..._friendActivity.take(5).map((a) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(child: Icon(Icons.person, color: Color(0xFF6366F1), size: 20)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '${a['username']} completed ${a['sessions_count']} session${(a['sessions_count'] as int) != 1 ? 's' : ''}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  Text('${a['total_minutes']}m', style: TextStyle(fontSize: 13, color: Colors.grey[500], fontWeight: FontWeight.bold)),
+                ],
+              ),
+            )),
+            const SizedBox(height: 16),
+          ],
         ],
       ),
     );
@@ -470,7 +765,7 @@ class _ActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20),
@@ -486,24 +781,24 @@ class _ActionCard extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 32),
+              child: Icon(icon, color: color, size: 28),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
             ),
           ],
         ),

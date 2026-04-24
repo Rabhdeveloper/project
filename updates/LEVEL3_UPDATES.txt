@@ -1,0 +1,127 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 3 UPDATES
+  Gamification, Engagement & Personalization
+  Date: 2026-04-23
+===================================================================
+
+GOAL:
+  Enhance user engagement through gamification and personalization.
+  Implemented daily goals, dynamic streaks, achievements, customizable
+  timers, study subjects, a leaderboard, and a dedicated settings menu.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. GOALS & STREAKS API
+   ├── File: backend/app/api/goals.py                [NEW]
+   ├── GET  /api/goals        → gets user's daily goal + current streak
+   ├── PUT  /api/goals        → updates daily goal target
+   ├── GET  /api/goals/today  → today's progress vs target
+   └── MongoDB collection: "user_goals"
+
+2. ACHIEVEMENTS API
+   ├── File: backend/app/api/achievements.py         [NEW]
+   ├── GET  /api/achievements      → lists all badges (locked & unlocked)
+   ├── POST /api/achievements/check → evaluates conditions and unlocks new badges
+   └── MongoDB collection: "user_achievements"
+
+3. SUBJECTS API
+   ├── File: backend/app/api/subjects.py             [NEW]
+   ├── GET    /api/subjects      → lists user's subjects
+   ├── POST   /api/subjects      → creates a new subject
+   ├── DELETE /api/subjects/{id} → deletes a subject
+   └── MongoDB collection: "subjects"
+
+4. LEADERBOARD API
+   ├── File: backend/app/api/leaderboard.py          [NEW]
+   ├── GET /api/leaderboard/weekly → top users by sessions this week
+   └── GET /api/leaderboard/typing → top users by best WPM all-time
+
+5. UPDATED SESSIONS API
+   ├── File: backend/app/api/sessions.py             [MODIFIED]
+   └── Accepts optional subject_id when saving a session
+
+6. WIRE ROUTERS INTO MAIN APP
+   ├── File: backend/app/main.py                     [MODIFIED]
+   └── Added goals, achievements, subjects, and leaderboard routers.
+   └── Updated version to 3.0.0
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+7. DASHBOARD SCREEN
+   ├── File: frontend/lib/screens/dashboard_screen.dart [MODIFIED]
+   ├── Added Daily Goal progress ring
+   ├── Shows current streak with fire emoji
+   └── Achievement unlocked toast on load (if new badges)
+
+8. ACHIEVEMENTS SCREEN
+   ├── File: frontend/lib/screens/achievements_screen.dart [NEW]
+   ├── Grid of badge cards
+   └── Colorful for unlocked, greyed out for locked
+
+9. CUSTOM TIMER & SUBJECTS
+   ├── File: frontend/lib/screens/study_screen.dart   [MODIFIED]
+   ├── Focus and break duration fetched from user preferences
+   └── Subject selector chip row to tag sessions
+
+10. LEADERBOARD SCREEN
+    ├── File: frontend/lib/screens/leaderboard_screen.dart [NEW]
+    ├── Two tabs: "📚 Study" and "⌨️ Typing"
+    └── Highlights top 3 and current user
+
+11. SETTINGS SCREEN
+    ├── File: frontend/lib/screens/settings_screen.dart [NEW]
+    ├── Daily Goal slider (1-10 sessions)
+    ├── Timer Defaults (focus/break durations)
+    └── App Info section
+
+12. PROFILE SCREEN
+    ├── File: frontend/lib/screens/profile_screen.dart [MODIFIED]
+    ├── "🏆 Achievements" and "⚙️ Settings" buttons
+    └── Displays current streak + total sessions
+
+===================================================================
+  API ENDPOINTS ADDED AT LEVEL 3
+===================================================================
+
+  | Method | Endpoint                | Description                    |
+  |--------|-------------------------|--------------------------------|
+  | GET    | /api/goals              | Get goal and streak            |
+  | PUT    | /api/goals              | Update daily target            |
+  | GET    | /api/goals/today        | Today's session count vs goal  |
+  | GET    | /api/achievements       | List all achievements          |
+  | POST   | /api/achievements/check | Unlock new eligible badges     |
+  | GET    | /api/subjects           | List user subjects             |
+  | POST   | /api/subjects           | Create a subject tag           |
+  | DELETE | /api/subjects/{id}      | Delete a subject tag           |
+  | GET    | /api/leaderboard/weekly | Top users by weekly sessions   |
+  | GET    | /api/leaderboard/typing | Top users by typing WPM        |
+
+===================================================================
+  SUMMARY — FILES CHANGED AT LEVEL 3
+===================================================================
+
+  NEW FILES:
+    backend/app/api/goals.py
+    backend/app/api/achievements.py
+    backend/app/api/subjects.py
+    backend/app/api/leaderboard.py
+    backend/app/models/goals.py
+    backend/app/models/achievements.py
+    backend/app/models/subjects.py
+    frontend/lib/screens/achievements_screen.dart
+    frontend/lib/screens/leaderboard_screen.dart
+    frontend/lib/screens/settings_screen.dart
+
+  MODIFIED FILES:
+    backend/app/main.py
+    backend/app/api/sessions.py
+    backend/app/models/user.py
+    frontend/lib/screens/dashboard_screen.dart
+    frontend/lib/screens/profile_screen.dart
+    frontend/lib/screens/study_screen.dart
+
+===================================================================

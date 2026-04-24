@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
+import 'achievements_screen.dart';
+import 'settings_screen.dart';
+import 'friends_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,6 +26,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _memberId = '';
   DateTime? _memberSince;
 
+  // Level 3: streak + total sessions
+  int _currentStreak = 0;
+  int _totalSessions = 0;
+
+  // Level 4: friends + notes + cards counts
+  int _friendsCount = 0;
+  int _notesCount = 0;
+  int _cardsCount = 0;
+
   final _usernameController = TextEditingController();
 
   @override
@@ -33,18 +45,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final response = await _apiService.client.get('/api/auth/me');
-      if (response.statusCode == 200) {
-        final data = response.data;
-        setState(() {
-          _username = data['username'] ?? '';
-          _email = data['email'] ?? '';
-          _memberId = (data['id'] ?? '').toString().substring(0, 8).toUpperCase();
-          _memberSince = DateTime.tryParse(data['created_at'] ?? '');
-          _usernameController.text = _username;
-          _isLoading = false;
-        });
-      }
+      final results = await Future.wait([
+        _apiService.client.get('/api/auth/me'),
+        _apiService.client.get('/api/goals'),
+        _apiService.client.get('/api/sessions/stats'),
+      ]);
+
+      final profileData = results[0].data;
+      final goalData = results[1].data;
+      final statsData = results[2].data;
+
+      setState(() {
+        _username = profileData['username'] ?? '';
+        _email = profileData['email'] ?? '';
+        _memberId = (profileData['id'] ?? '').toString().substring(0, 8).toUpperCase();
+        _memberSince = DateTime.tryParse(profileData['created_at'] ?? '');
+        _usernameController.text = _username;
+        _currentStreak = goalData['current_streak'] ?? 0;
+        _totalSessions = statsData['total_sessions'] ?? 0;
+        _isLoading = false;
+      });
+
+      // Load Level 4 counts in background
+      _loadExtraCounts();
     } on DioException catch (e) {
       setState(() {
         _error = e.response?.data is Map
@@ -53,6 +76,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadExtraCounts() async {
+    try {
+      final results = await Future.wait([
+        _apiService.client.get('/api/friends'),
+        _apiService.client.get('/api/notes'),
+        _apiService.client.get('/api/flashcards'),
+      ]);
+      if (mounted) {
+        setState(() {
+          _friendsCount = (results[0].data as List).length;
+          _notesCount = (results[1].data as List).length;
+          _cardsCount = (results[2].data as List).length;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _saveUsername() async {
@@ -149,6 +189,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
+          // Settings icon
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
           if (!_isLoading && _error == null)
             IconButton(
               icon: Icon(_isEditing ? Icons.close : Icons.edit_outlined),
@@ -315,7 +365,190 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
 
-          const SizedBox(height: 36),
+          const SizedBox(height: 24),
+
+          // ── Streak + Sessions Summary ────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B).withOpacity(0.25),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('🔥', style: TextStyle(fontSize: 24)),
+                      const SizedBox(height: 6),
+                      Text(
+                        '$_currentStreak',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: Color(0xFFF59E0B),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Day Streak',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withOpacity(0.25),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.check_circle_outline,
+                          color: Color(0xFF10B981), size: 26),
+                      const SizedBox(height: 6),
+                      Text(
+                        '$_totalSessions',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Total Sessions',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── Achievements Button ──────────────────────────────────────────
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const AchievementsScreen()),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFF59E0B).withOpacity(0.15),
+                    const Color(0xFFEF4444).withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFF59E0B).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text('🏆', style: TextStyle(fontSize: 22)),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Achievements',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'View your badges and progress',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.grey[500]),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Friends Button ────────────────────────────────────────────
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FriendsScreen()),
+              ).then((_) => _loadExtraCounts());
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF3B82F6).withOpacity(0.15),
+                    const Color(0xFF6366F1).withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF3B82F6).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text('👥', style: TextStyle(fontSize: 22)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Friends', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 2),
+                        Text('$_friendsCount friend${_friendsCount != 1 ? 's' : ''} connected',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.grey[500]),
+                ],
+              ),
+            ),
+          ),
 
           // ── Info Cards ──────────────────────────────────────────────────────
           _InfoCard(
@@ -354,7 +587,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text('App Version', style: TextStyle(color: Colors.grey[400])),
                 const Text(
-                  'v1.0.0 (Level 1)',
+                  'v4.0.0 (Level 4)',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],

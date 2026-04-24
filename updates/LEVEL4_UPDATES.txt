@@ -1,0 +1,121 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 4 UPDATES
+  Social, Analytics & Smart Features
+  Date: 2026-04-24
+===================================================================
+
+GOAL:
+  Introduce social connectivity, detailed progress insights, and smart
+  features. Added friend system, friend activity feed, notes, flashcards
+  with spaced repetition (SM-2), 90-day heatmap analytics, personalized
+  study tips, and push-notification-ready study reminders.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. FRIENDS & ACTIVITY API
+   ├── File: backend/app/api/friends.py              [NEW]
+   ├── File: backend/app/api/activity.py             [NEW]
+   ├── POST   /api/friends/request         → send friend request
+   ├── GET    /api/friends/requests        → list pending incoming requests
+   ├── PUT    /api/friends/accept/{req_id} → accept request
+   ├── PUT    /api/friends/reject/{req_id} → reject request
+   ├── GET    /api/friends                 → list all accepted friends
+   ├── DELETE /api/friends/{friend_id}     → remove a friend
+   ├── GET    /api/friends/search?q=       → search users by username
+   ├── GET    /api/activity/friends        → friend study feed (last 24h)
+   └── MongoDB collection: "friend_requests"
+
+2. NOTES & FLASHCARDS API
+   ├── File: backend/app/api/notes.py                [NEW]
+   ├── File: backend/app/api/flashcards.py           [NEW]
+   ├── CRUD endpoints for study notes (/api/notes)
+   ├── CRUD endpoints for flashcards (/api/flashcards)
+   ├── GET    /api/flashcards/review       → get cards due for spaced repetition
+   ├── POST   /api/flashcards/{id}/review  → rate card 1-5 to update SM-2 schedule
+   └── MongoDB collections: "notes", "flashcards"
+
+3. ANALYTICS API
+   ├── File: backend/app/api/analytics.py            [NEW]
+   ├── GET /api/analytics/heatmap     → 90-day study heatmap data
+   ├── GET /api/analytics/subjects    → time breakdown by subject
+   ├── GET /api/analytics/trends      → weekly averages over 8 weeks
+   └── GET /api/analytics/focus-hours → best focus hours of the day
+
+4. SMART TIPS & REMINDERS API
+   ├── File: backend/app/api/tips.py                 [NEW]
+   ├── File: backend/app/api/reminders.py            [NEW]
+   ├── GET /api/tips/daily      → personalized tip based on user stats
+   ├── CRUD endpoints for study reminders (/api/reminders)
+   └── MongoDB collection: "reminders"
+
+5. WIRE ALL 7 NEW ROUTERS
+   ├── File: backend/app/main.py                     [MODIFIED]
+   └── Added friends, activity, notes, flashcards, analytics, tips, reminders routers.
+   └── Updated version to 4.0.0 (total 39 active routes)
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+6. NEW SCREENS
+   ├── File: frontend/lib/screens/notes_screen.dart       [NEW]
+   │   └── Search, card list, full-screen note editor
+   ├── File: frontend/lib/screens/flashcards_screen.dart  [NEW]
+   │   └── Browse/Review tabs, card flip, SM-2 1-5 quality rating
+   ├── File: frontend/lib/screens/friends_screen.dart     [NEW]
+   │   └── Friends list, incoming requests, user search tabs
+   ├── File: frontend/lib/screens/analytics_screen.dart   [NEW]
+   │   └── 90-day heatmap grid, subject pie, focus hours, trends chart
+   └── File: frontend/lib/screens/onboarding_screen.dart  [NEW]
+       └── 3-page intro flow on first launch
+
+7. DASHBOARD UPGRADES
+   ├── File: frontend/lib/screens/dashboard_screen.dart   [MODIFIED]
+   ├── 2x2 Quick Actions grid (Pomodoro, Typing, Notes, Flashcards)
+   ├── Daily Tip card (personalized advice)
+   └── Friend Activity section (feed of recent friend study sessions)
+
+8. PROFILE & SETTINGS ENHANCEMENTS
+   ├── File: frontend/lib/screens/profile_screen.dart     [MODIFIED]
+   │   └── Friends button with count, total notes/cards badge, v4.0.0
+   └── File: frontend/lib/screens/settings_screen.dart    [MODIFIED]
+       └── Reminders section with add/toggle/delete, time picker
+
+9. AUTH GATE & STATS UPGRADES
+   ├── File: frontend/lib/main.dart                       [MODIFIED]
+   │   └── Onboarding gate check using SharedPreferences
+   └── File: frontend/lib/screens/stats_screen.dart       [MODIFIED]
+       └── Added Analytics tab (embedding AnalyticsScreen)
+
+===================================================================
+  SUMMARY — FILES CHANGED AT LEVEL 4
+===================================================================
+
+  NEW FILES:
+    backend/app/api/friends.py
+    backend/app/api/activity.py
+    backend/app/api/notes.py
+    backend/app/api/flashcards.py
+    backend/app/api/analytics.py
+    backend/app/api/tips.py
+    backend/app/api/reminders.py
+    backend/app/models/friends.py
+    backend/app/models/notes.py
+    backend/app/models/reminders.py
+    frontend/lib/screens/notes_screen.dart
+    frontend/lib/screens/flashcards_screen.dart
+    frontend/lib/screens/friends_screen.dart
+    frontend/lib/screens/analytics_screen.dart
+    frontend/lib/screens/onboarding_screen.dart
+
+  MODIFIED FILES:
+    backend/app/main.py
+    frontend/lib/main.dart
+    frontend/lib/screens/dashboard_screen.dart
+    frontend/lib/screens/profile_screen.dart
+    frontend/lib/screens/stats_screen.dart
+    frontend/lib/screens/settings_screen.dart
+
+===================================================================

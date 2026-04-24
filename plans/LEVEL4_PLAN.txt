@@ -1,0 +1,241 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 4 PLAN
+  Saved: 2026-04-24
+===================================================
+
+LEVEL 4 GOAL: Social, Analytics & Smart Features.
+  Study groups, friend system, AI study tips,
+  detailed analytics, notes/flashcards, and
+  push notification reminders.
+
+---------------------------------------------------
+RECAP — What already exists:
+---------------------------------------------------
+  Level 1: Auth, Pomodoro timer, Typing test, Profile
+  Level 2: Data-driven (sessions/typing saved to DB, stats, charts)
+  Level 3: Gamification (goals, streaks, achievements, subjects,
+           leaderboard, settings, custom timer)
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+ ═══════════════════════════════════════════════════
+  SECTION A — SOCIAL & FRIENDS
+ ═══════════════════════════════════════════════════
+
+1. BACKEND — Friends API  [NEW: app/api/friends.py]
+   - POST /api/friends/request         → send friend request {to_user_id}
+   - GET  /api/friends/requests        → list pending incoming requests
+   - PUT  /api/friends/accept/{req_id} → accept friend request
+   - PUT  /api/friends/reject/{req_id} → reject/decline request
+   - GET  /api/friends                 → list all accepted friends
+   - DELETE /api/friends/{friend_id}   → remove a friend
+   - GET  /api/friends/search?q=       → search users by username
+
+2. BACKEND — Friends Model  [NEW: app/models/friends.py]
+   - FriendRequest: {_id, from_user_id, to_user_id, status, created_at}
+     status: "pending" | "accepted" | "rejected"
+   - FriendRequestResponse, FriendResponse (Pydantic schemas)
+
+3. FRONTEND — Friends Screen  [NEW: friends_screen.dart]
+   - Three tabs: "Friends", "Requests", "Search"
+   - Friends tab: list with avatar, username, streak, remove button
+   - Requests tab: incoming requests with accept/reject buttons
+   - Search tab: text field → search results with "Add" button
+   - Accessible from Profile via "👥 Friends" button
+
+4. FRONTEND — Friend Activity Feed  [MODIFY: dashboard_screen.dart]
+   - New section below Weekly Focus: "🧑‍🤝‍🧑 Friend Activity"
+   - Shows recent friend sessions: "Alice completed 3 sessions today"
+   - Tapping a friend opens their mini-profile card
+
+5. BACKEND — Friend Activity API  [NEW: app/api/activity.py]
+   - GET /api/activity/friends → recent sessions from friends (last 24h)
+     Returns: [{username, sessions_count, total_minutes, latest_at}]
+
+ ═══════════════════════════════════════════════════
+  SECTION B — STUDY NOTES & FLASHCARDS
+ ═══════════════════════════════════════════════════
+
+6. BACKEND — Notes API  [NEW: app/api/notes.py]
+   - POST   /api/notes           → create note {title, content, subject_id?}
+   - GET    /api/notes           → list all user notes (newest first)
+   - GET    /api/notes/{id}      → get single note
+   - PUT    /api/notes/{id}      → update note
+   - DELETE /api/notes/{id}      → delete note
+
+7. BACKEND — Flashcards API  [NEW: app/api/flashcards.py]
+   - POST   /api/flashcards           → create card {question, answer, subject_id?}
+   - GET    /api/flashcards           → list all user cards
+   - GET    /api/flashcards/review    → get cards due for review (spaced repetition)
+   - PUT    /api/flashcards/{id}      → update card
+   - DELETE /api/flashcards/{id}      → delete card
+   - POST   /api/flashcards/{id}/review → mark reviewed {quality: 1-5}
+     Updates next_review date using SM-2 algorithm
+
+8. BACKEND — Notes & Flashcard Models  [NEW: app/models/notes.py]
+   - Note: {_id, user_id, title, content, subject_id?, created_at, updated_at}
+   - Flashcard: {_id, user_id, question, answer, subject_id?,
+                 easiness, interval, repetitions, next_review, created_at}
+   - NoteCreate, NoteResponse, FlashcardCreate, FlashcardResponse
+
+9. FRONTEND — Notes Screen  [NEW: notes_screen.dart]
+   - List view with search bar at top
+   - Tap note → full-screen editor with markdown-like preview
+   - FAB to create new note
+   - Subject filter chips
+   - Swipe to delete with confirmation
+   - Accessible from Dashboard via new "📝 Notes" action card
+
+10. FRONTEND — Flashcards Screen  [NEW: flashcards_screen.dart]
+    - Two modes: "📚 Browse" and "🧠 Review"
+    - Browse: grid/list of all cards grouped by subject
+    - Review: swipeable card stack (tap to flip front→back)
+      - After seeing answer: rate 1-5 difficulty
+      - Cards scheduled by spaced repetition
+    - FAB to create new flashcard
+    - Shows "X cards due for review" badge
+    - Accessible from Dashboard via new "🃏 Flashcards" action card
+
+ ═══════════════════════════════════════════════════
+  SECTION C — ADVANCED ANALYTICS
+ ═══════════════════════════════════════════════════
+
+11. BACKEND — Analytics API  [NEW: app/api/analytics.py]
+    - GET /api/analytics/heatmap     → 90-day study heatmap data
+      Returns: [{date, sessions_count, total_minutes}] for last 90 days
+    - GET /api/analytics/subjects    → time breakdown by subject
+      Returns: [{subject_name, subject_color, total_minutes, session_count}]
+    - GET /api/analytics/trends      → weekly averages over last 8 weeks
+      Returns: [{week_label, avg_sessions, avg_minutes, avg_wpm}]
+    - GET /api/analytics/focus-hours → best focus hours of the day
+      Returns: [{hour, session_count}] (0–23 distribution)
+
+12. FRONTEND — Analytics Screen  [NEW: analytics_screen.dart]
+    - Study Heatmap: GitHub-style contribution grid (90 days)
+      Color intensity = sessions that day (grey→green gradient)
+    - Subject Breakdown: animated donut/pie chart
+    - Weekly Trends: dual-axis line chart (sessions + WPM over 8 weeks)
+    - Focus Hours: bar chart showing most productive hours
+    - Accessible by replacing current Stats tab or as sub-tab
+
+13. FRONTEND — Stats Screen Upgrade  [MODIFY: stats_screen.dart]
+    - Add "📊 Analytics" tab alongside Study/Typing tabs
+    - Analytics tab embeds the new AnalyticsScreen content
+    - Move existing Study/Typing tabs content as-is
+
+ ═══════════════════════════════════════════════════
+  SECTION D — SMART STUDY TIPS & REMINDERS
+ ═══════════════════════════════════════════════════
+
+14. BACKEND — Study Tips API  [NEW: app/api/tips.py]
+    - GET /api/tips/daily → personalized tip based on user data
+      Logic:
+        - If streak is 0 → motivational "start studying" tip
+        - If streak > 7 → congratulatory "keep it up" tip
+        - If best hour is morning → "you study best at X AM" tip
+        - If WPM improving → "your typing is improving!" tip
+        - Rotates through 20+ tip templates with dynamic data
+      Returns: {tip, icon, category}
+
+15. FRONTEND — Daily Tip Card  [MODIFY: dashboard_screen.dart]
+    - New card below Quick Actions: "💡 Smart Tip"
+    - Shows personalized daily tip from API
+    - Subtle gradient background, dismissible
+    - Refreshes on pull-to-refresh
+
+16. BACKEND — Reminders API  [NEW: app/api/reminders.py]
+    - GET    /api/reminders       → list user's reminders
+    - POST   /api/reminders       → create reminder
+      {title, time: "09:00", days: ["mon","tue",...], enabled: true}
+    - PUT    /api/reminders/{id}  → update reminder
+    - DELETE /api/reminders/{id}  → delete reminder
+
+17. BACKEND — Reminders Model  [NEW: app/models/reminders.py]
+    - Reminder: {_id, user_id, title, time, days, enabled, created_at}
+    - ReminderCreate, ReminderResponse
+
+18. FRONTEND — Reminders Settings  [MODIFY: settings_screen.dart]
+    - New section: "⏰ Study Reminders"
+    - List of configured reminders with toggle on/off
+    - "Add Reminder" button → bottom sheet picker
+      - Title, time picker, day-of-week toggles
+    - Note: actual push notifications need flutter_local_notifications
+      (Level 4 saves config; actual device notifications as enhancement)
+
+ ═══════════════════════════════════════════════════
+  SECTION E — UX POLISH & ENHANCEMENTS
+ ═══════════════════════════════════════════════════
+
+19. FRONTEND — Onboarding Flow  [NEW: onboarding_screen.dart]
+    - 3-page intro shown on first launch (SharedPreferences flag)
+    - Page 1: "Track Your Study" — timer illustration
+    - Page 2: "Earn Achievements" — badges illustration
+    - Page 3: "Compete & Connect" — leaderboard illustration
+    - "Get Started" button → navigate to LoginScreen
+    - Smooth PageView with dot indicators
+
+20. FRONTEND — Dashboard Redesign  [MODIFY: dashboard_screen.dart]
+    - Add "📝 Notes" quick action card
+    - Add "🃏 Flashcards" quick action card
+    - Reorganize quick actions into 2x2 grid (Pomodoro, Typing, Notes, Flashcards)
+    - Add "🏅 Leaderboard" as a standalone button above quick actions
+    - Add Friend Activity section
+    - Add Daily Tip card
+
+21. FRONTEND — Profile Enhancements  [MODIFY: profile_screen.dart]
+    - Add "👥 Friends" button (shows friend count badge)
+    - Add study stats summary: total hours, notes count, cards count
+    - Update version to "v4.0.0 (Level 4)"
+
+22. BACKEND — Wire All New Routers  [MODIFY: app/main.py]
+    - Include friends.router    at /api/friends
+    - Include activity.router   at /api/activity
+    - Include notes.router      at /api/notes
+    - Include flashcards.router at /api/flashcards
+    - Include analytics.router  at /api/analytics
+    - Include tips.router       at /api/tips
+    - Include reminders.router  at /api/reminders
+    - Update version to "4.0.0"
+
+23. FRONTEND — Auth Gate Update  [MODIFY: main.dart]
+    - Check 'onboarding_complete' flag in SharedPreferences
+    - If first launch → OnboardingScreen
+    - If not logged in → LoginScreen
+    - If logged in → MainLayout
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend (via /docs Swagger):
+    - POST /api/friends/request → send friend request
+    - GET  /api/friends → list friends after accepting
+    - POST /api/notes → create note
+    - GET  /api/flashcards/review → get review cards
+    - POST /api/flashcards/{id}/review → update SM-2 schedule
+    - GET  /api/analytics/heatmap → 90 days of data
+    - GET  /api/analytics/subjects → subject breakdown
+    - GET  /api/tips/daily → personalized tip
+    - POST /api/reminders → create reminder
+
+  Frontend:
+    - First launch → Onboarding slides → Login
+    - Dashboard → Notes card, Flashcards card, Friend Activity, Daily Tip
+    - Friends screen → Search user → Send request → Accept → Appears in list
+    - Notes screen → Create note → Edit → Search → Delete
+    - Flashcards → Create card → Review mode → Flip → Rate → Due date updates
+    - Analytics → Heatmap shows 90 days, Pie chart by subject, Trends chart
+    - Settings → Add study reminder → Toggle on/off
+    - Profile → Friends button shows count, v4.0.0
+
+---------------------------------------------------
+IMPLEMENTATION ORDER (recommended):
+---------------------------------------------------
+  Phase 1: Backend models + APIs (all 7 new routers)
+  Phase 2: Notes + Flashcards screens
+  Phase 3: Friends + Activity system
+  Phase 4: Analytics + Study Tips
+  Phase 5: Onboarding + Dashboard redesign + Polish
+
+===================================================

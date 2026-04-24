@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/main_layout.dart';
 import 'screens/login_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -69,6 +70,7 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  bool _onboardingComplete = false;
 
   @override
   void initState() {
@@ -79,9 +81,11 @@ class _AuthGateState extends State<AuthGate> {
   Future<void> _checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
+    final onboarded = prefs.getBool('onboarding_complete') ?? false;
     
     setState(() {
       _isAuthenticated = token != null;
+      _onboardingComplete = onboarded;
       _isLoading = false;
     });
   }
@@ -94,6 +98,9 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
     
+    if (!_onboardingComplete) {
+      return const OnboardingScreen();
+    }
     return _isAuthenticated ? const MainLayout() : const LoginScreen();
   }
 }

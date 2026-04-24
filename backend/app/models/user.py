@@ -52,6 +52,7 @@ class UserResponse(UserBase):
 class StudySessionCreate(BaseModel):
     duration_minutes: int = Field(..., gt=0, description="Duration of the study session in minutes")
     session_type: str = Field(default="focus", description="Type of session: 'focus' or 'break'")
+    subject_id: Optional[str] = Field(None, description="Optional subject ID to tag session")
 
     @field_validator("session_type")
     @classmethod
@@ -66,6 +67,7 @@ class StudySession(BaseModel):
     user_id: str
     duration_minutes: int
     session_type: str = "focus"
+    subject_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
@@ -76,6 +78,7 @@ class StudySessionResponse(BaseModel):
     id: str
     duration_minutes: int
     session_type: str
+    subject_id: Optional[str] = None
     created_at: datetime
 
     class Config:

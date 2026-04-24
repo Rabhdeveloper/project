@@ -3,13 +3,6 @@
   Saved: 2026-04-21
 ===================================================
 
-LEVEL 1 (DONE):
-  - Auth: Register, Login, JWT, /me, PUT /me
-  - Profile Screen (full)
-  - Pomodoro Timer (client-side)
-  - Typing Practice (client-side)
-  - Dashboard with working nav
-
 LEVEL 2 GOAL: Make the app data-driven.
   All user actions saved to MongoDB. Real charts on dashboard.
 

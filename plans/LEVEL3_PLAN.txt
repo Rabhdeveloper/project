@@ -3,23 +3,6 @@
   Saved: 2026-04-22
 ===================================================
 
-LEVEL 1 (DONE):
-  - Auth: Register, Login, JWT, /me, PUT /me
-  - Profile Screen (full)
-  - Pomodoro Timer (client-side)
-  - Typing Practice (client-side)
-  - Dashboard with working nav
-
-LEVEL 2 (DONE):
-  - Study Sessions API (POST, GET, /weekly, /stats)
-  - Typing Results API (POST, GET, /best)
-  - Save sessions on Pomodoro complete
-  - Save results on typing complete
-  - Live Dashboard (real username, real chart, real stats)
-  - Stats Screen with charts + history
-  - Register inline validation
-  - Backend Pydantic validation
-
 LEVEL 3 GOAL: Engagement, Gamification & Personalization.
   Daily goals, streaks, achievements, custom timer,
   study subjects, leaderboard, and a settings screen.

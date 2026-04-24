@@ -25,6 +25,7 @@ async def create_session(
         "user_id": current_user["_id"],
         "duration_minutes": session.duration_minutes,
         "session_type": session.session_type,
+        "subject_id": session.subject_id,
         "created_at": now,
     }
 
@@ -34,6 +35,7 @@ async def create_session(
         id=session_id,
         duration_minutes=session.duration_minutes,
         session_type=session.session_type,
+        subject_id=session.subject_id,
         created_at=now,
     )
 
@@ -56,6 +58,7 @@ async def get_sessions(
             id=doc["_id"],
             duration_minutes=doc["duration_minutes"],
             session_type=doc.get("session_type", "focus"),
+            subject_id=doc.get("subject_id"),
             created_at=doc["created_at"],
         ))
     return sessions
