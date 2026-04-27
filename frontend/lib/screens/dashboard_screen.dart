@@ -521,8 +521,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-            ),
-          ).animate().fade(delay: 200.ms).slideY(begin: 0.1, end: 0),
+            ).animate().fade(delay: 200.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: 32),
 
           // ── Leaderboard Button ──────────────────────────────────────────
