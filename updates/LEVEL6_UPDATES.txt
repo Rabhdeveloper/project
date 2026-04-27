@@ -1,0 +1,76 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 6 UPDATES
+  Hardware Integrations, Adaptive Learning, & Ecosystem
+  Date: 2026-04-27
+===================================================================
+
+GOAL:
+  Evolve the tracker into a mature, enterprise-ready ecosystem. 
+  Introduces Machine Learning to optimize study schedules based on 
+  cognitive load, opens the platform to third-party developers via 
+  Personal Access Tokens (PATs) and Webhooks, and lays the groundwork 
+  for smartwatch companions and system-wide focus blocks.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. ML ADAPTIVE SCHEDULING ENGINE
+   ├── File: backend/app/core/ml_engine.py           [NEW]
+   ├── File: backend/app/api/schedule.py             [NEW]
+   ├── CognitiveLoadModel simulating ML inference for optimal study times.
+   ├── Dynamically adjusts focus/break durations based on time of day 
+   │   and the user's current goal streak.
+   └── GET /api/schedule/optimal → returns personalized study itinerary.
+
+2. OPEN DEVELOPER API & WEBHOOKS
+   ├── File: backend/app/models/developer.py         [NEW]
+   ├── File: backend/app/api/developer.py            [NEW]
+   ├── POST   /api/developer/tokens      → generate secure PAT (SHA-256 hashed)
+   ├── GET    /api/developer/tokens      → list active tokens
+   ├── DELETE /api/developer/tokens/{id} → revoke a PAT
+   ├── POST   /api/developer/webhooks    → register an event webhook URL
+   └── MongoDB collections: "personal_access_tokens", "webhooks"
+
+3. ORGANIZATIONS & TEAMS API (Planned for Phase 3)
+   ├── File: backend/app/api/organizations.py        [NEW]
+   ├── POST /api/orgs          → create a classroom/team
+   ├── POST /api/orgs/invite   → invite students/members
+   └── GET  /api/orgs/stats    → aggregate progress for teachers
+
+4. WIRE ALL LEVEL 6 ROUTERS
+   ├── File: backend/app/main.py                     [MODIFIED]
+   ├── Added schedule and developer routers.
+   └── Updated API version to 6.0.0
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+5. SMARTWATCH COMPANION APP (WearOS/WatchOS)
+   ├── Directory: frontend/watch/                    [NEW]
+   └── Standalone Pomodoro timer with haptic feedback synced via WebSocket.
+
+6. CLASSROOM & TEAMS DASHBOARD
+   ├── File: frontend/lib/screens/class_dashboard_screen.dart [NEW]
+   └── Teacher views for assigning flashcards and monitoring aggregate focus.
+
+7. SYSTEM-WIDE FOCUS BLOCKS (Desktop Native)
+   ├── Target: MacOS / Windows Clients
+   └── OS-level integration to block distracting websites and mute 
+       notifications during a study session.
+
+===================================================================
+  SUMMARY — FILES CHANGED AT LEVEL 6
+===================================================================
+
+  NEW FILES:
+    backend/app/core/ml_engine.py
+    backend/app/api/schedule.py
+    backend/app/models/developer.py
+    backend/app/api/developer.py
+
+  MODIFIED FILES:
+    backend/app/main.py
+
+===================================================================

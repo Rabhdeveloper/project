@@ -1,0 +1,92 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 6 PLAN
+  Saved: 2026-04-27
+===================================================
+
+LEVEL 6 GOAL: Hardware Integrations, Adaptive Learning, & Ecosystem.
+  Smartwatch Companion, ML-driven Adaptive Scheduling, 
+  Classroom/Enterprise Teams, System-wide Focus Blocks, 
+  and an Open Developer API.
+
+---------------------------------------------------
+RECAP — What already exists:
+---------------------------------------------------
+  Level 1: Foundation (Auth, Timer, Typing)
+  Level 2: Data (History, Stats)
+  Level 3: Gamification (Goals, Streaks, Badges, Subjects, Leaderboard)
+  Level 4: Social & Content (Friends, Notes, Flashcards, Analytics)
+  Level 5: AI & Real-time (Study Buddy, Multiplayer Rooms, Voice Sync)
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+ ═══════════════════════════════════════════════════
+  SECTION A — ML-DRIVEN ADAPTIVE LEARNING
+ ═══════════════════════════════════════════════════
+
+1. BACKEND — Adaptive Scheduling Engine  [NEW: app/core/ml_engine.py]
+   - Replaces basic SM-2 algorithm with an ML-based retention model (e.g., FSRS).
+   - Analyzes user's focus hours and typing speeds to suggest optimal study session durations based on cognitive load.
+   - GET /api/ai/schedule → returns an optimized daily study itinerary.
+
+ ═══════════════════════════════════════════════════
+  SECTION B — HARDWARE & COMPANION APPS
+ ═══════════════════════════════════════════════════
+
+2. FRONTEND — Smartwatch App (WearOS & WatchOS)  [NEW: watch/ directory]
+   - Standalone Pomodoro timer synced with the user's account.
+   - Haptic feedback for focus/break transitions.
+   - Quick dictation for capturing stray thoughts into the Notes inbox.
+
+ ═══════════════════════════════════════════════════
+  SECTION C — ENTERPRISE & CLASSROOM MODE
+ ═══════════════════════════════════════════════════
+
+3. BACKEND — Organizations API  [NEW: app/api/organizations.py]
+   - POST /api/orgs          → create a classroom/team
+   - POST /api/orgs/invite   → invite students
+   - GET  /api/orgs/stats    → aggregate progress for teachers
+
+4. FRONTEND — Classroom Dashboard  [NEW: class_dashboard_screen.dart]
+   - Teacher view: monitor student focus times and assign specific flashcard decks.
+   - Student view: shared assignments and org-specific leaderboards.
+
+ ═══════════════════════════════════════════════════
+  SECTION D — DESKTOP CLIENTS & SYSTEM BLOCKS
+ ═══════════════════════════════════════════════════
+
+5. FRONTEND — Native Desktop Apps (MacOS / Windows)  [MODIFY: linux/mac/win runners]
+   - System-wide "Deep Work" mode: integrates with OS APIs to block distracting websites and mute notifications during a Pomodoro session.
+   - Always-on-top mini timer widget.
+
+ ═══════════════════════════════════════════════════
+  SECTION E — OPEN DEVELOPER API
+ ═══════════════════════════════════════════════════
+
+6. BACKEND — Developer Platform  [NEW: app/api/developer.py]
+   - OAuth2 Client Registration: allowing 3rd party apps to read/write study data.
+   - Personal Access Tokens (PATs) for users to build their own custom scripts or integrations (e.g., syncing stats to Notion).
+   - Webhooks: trigger external services on timer completion or achievement unlock.
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend:
+    - GET /api/ai/schedule → yields personalized ML itinerary.
+    - POST /api/developer/tokens → generates a secure PAT.
+
+  Frontend:
+    - Desktop App → toggling focus mode correctly requests system permissions and blocks defined URLs.
+    - Watch App → starting timer on watch reflects instantly on the mobile/web dashboard via WebSocket.
+
+---------------------------------------------------
+IMPLEMENTATION ORDER (recommended):
+---------------------------------------------------
+  Phase 1: ML Adaptive Scheduling Engine
+  Phase 2: Open Developer API & Webhooks
+  Phase 3: Classroom / Teams Organizations
+  Phase 4: Smartwatch Companion App
+  Phase 5: Desktop Native Client (System Focus Mode)
+
+===================================================

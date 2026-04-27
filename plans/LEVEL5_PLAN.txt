@@ -1,0 +1,121 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 5 PLAN
+  Saved: 2026-04-27
+===================================================
+
+LEVEL 5 GOAL: AI Integrations, Real-time Collaboration & Ecosystem.
+  AI Study Buddy, Multiplayer Study Rooms, Voice-to-Text notes,
+  Calendar Integration, and Offline/Cloud Sync mechanisms.
+
+---------------------------------------------------
+RECAP — What already exists:
+---------------------------------------------------
+  Level 1: Auth, Pomodoro timer, Typing test, Profile
+  Level 2: Data-driven (sessions/typing saved to DB, stats, charts)
+  Level 3: Gamification (goals, streaks, achievements, subjects, leaderboard)
+  Level 4: Social & Content (friends, notes, flashcards, analytics, tips)
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+ ═══════════════════════════════════════════════════
+  SECTION A — AI "STUDY BUDDY" INTEGRATION
+ ═══════════════════════════════════════════════════
+
+1. BACKEND — AI Tutor API  [NEW: app/api/ai_tutor.py]
+   - POST /api/ai/ask      → ask a question contextually based on notes
+   - POST /api/ai/generate → generate flashcards automatically from a note
+   - POST /api/ai/summary  → summarize a long note into key bullet points
+   - Integrates with external LLM API (e.g., OpenAI/Gemini)
+
+2. FRONTEND — AI Assistant Screen  [NEW: ai_assistant_screen.dart]
+   - Chat-like interface to talk to the "Study Buddy"
+   - Floating action button in Notes screen to "Summarize" or "Generate Cards"
+   - Accessible via a new FAB on the Dashboard or a dedicated tab
+
+ ═══════════════════════════════════════════════════
+  SECTION B — REAL-TIME STUDY ROOMS
+ ═══════════════════════════════════════════════════
+
+3. BACKEND — WebSockets for Rooms  [NEW: app/api/rooms.py, app/websockets.py]
+   - POST /api/rooms           → create a multiplayer study room
+   - GET  /api/rooms           → list active public rooms / friend rooms
+   - WS   /ws/rooms/{room_id}  → real-time connection for timer sync
+   - Broadcasts timer start, pause, and user presence
+
+4. BACKEND — Rooms Model  [NEW: app/models/rooms.py]
+   - StudyRoom: {_id, host_id, name, is_private, current_status, participants}
+   - RoomCreate, RoomResponse schemas
+
+5. FRONTEND — Study Rooms Screen  [NEW: rooms_screen.dart]
+   - Lobby to view active friend rooms or public rooms
+   - Inside Room: Shared Pomodoro timer synced via WebSocket
+   - Participant list showing live status (Focusing, on Break)
+   - Integrated basic chat/emoji reactions for motivation
+
+ ═══════════════════════════════════════════════════
+  SECTION C — VOICE & ACCESSIBILITY
+ ═══════════════════════════════════════════════════
+
+6. FRONTEND — Voice-to-Text Notes  [MODIFY: notes_screen.dart]
+   - Add microphone icon in note editor
+   - Use speech_to_text package to dictate notes directly
+   - Works for flashcard creation (Q&A dictation)
+
+7. FRONTEND — Audio Flashcards  [MODIFY: flashcards_screen.dart]
+   - Text-to-Speech (TTS) integration to read flashcards aloud
+   - Auto-play option during review mode for hands-free learning
+
+ ═══════════════════════════════════════════════════
+  SECTION D — EXTERNAL INTEGRATIONS
+ ═══════════════════════════════════════════════════
+
+8. BACKEND — Calendar API  [NEW: app/api/calendar.py]
+   - POST /api/calendar/sync   → push scheduled study reminders to external calendar
+   - GET  /api/calendar/events → fetch upcoming calendar events to suggest study blocks
+   - Integrates via standardized iCal format or direct Google Calendar API
+
+9. FRONTEND — Calendar Sync Settings  [MODIFY: settings_screen.dart]
+   - "Connect Google Calendar" OAuth button
+   - Option to automatically block out study times
+
+ ═══════════════════════════════════════════════════
+  SECTION E — OFFLINE SYNC & POLISH
+ ═══════════════════════════════════════════════════
+
+10. FRONTEND — Local Database Sync  [NEW: services/sync_service.dart]
+    - Introduce local SQLite / Isar for offline capability
+    - Cache notes, flashcards, and achievements locally
+    - Sync queue for offline study sessions: push to MongoDB when reconnected
+
+11. FRONTEND — UI/UX Overhaul for V5  [MODIFY: main_layout.dart, theme.dart]
+    - Update styling to accommodate new AI and Room features
+    - Glassmorphism effects for premium feel
+    - Update version to "v5.0.0 (Level 5)" in Profile
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend:
+    - POST /api/ai/generate → returns a list of flashcard objects based on text
+    - WS /ws/rooms/{room_id} → multiple clients can connect and receive sync events
+    - POST /api/rooms → creates a room successfully
+
+  Frontend:
+    - AI Screen → chat responds correctly, UI shows typing indicators
+    - Study Rooms → joining a room syncs the timer perfectly with the host
+    - Voice Notes → dictation accurately populates text field
+    - Offline Mode → completing a session without internet saves it, then syncs on reconnect
+    - Settings → Calendar auth flow completes
+
+---------------------------------------------------
+IMPLEMENTATION ORDER (recommended):
+---------------------------------------------------
+  Phase 1: WebSockets & Real-time Study Rooms
+  Phase 2: AI Tutor API & Chat Interface
+  Phase 3: Voice-to-Text and TTS for Notes/Flashcards
+  Phase 4: Offline Sync Architecture
+  Phase 5: Calendar Integration & V5 Polish
+
+===================================================

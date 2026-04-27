@@ -5,6 +5,7 @@ from app.core.database import connect_to_mongo, close_mongo_connection
 from app.api import (
     auth, sessions, typing, goals, achievements, subjects, leaderboard,
     friends, activity, notes, flashcards, analytics, tips, reminders,
+    rooms, schedule, developer
 )
 
 @asynccontextmanager
@@ -18,7 +19,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Smart Study & Productivity Tracker API",
     description="Backend API for real-time tracking of study sessions and typing practice.",
-    version="4.0.0",
+    version="6.0.0",
     lifespan=lifespan
 )
 
@@ -50,6 +51,13 @@ app.include_router(flashcards.router, prefix="/api/flashcards", tags=["Flashcard
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(tips.router, prefix="/api/tips", tags=["Study Tips"])
 app.include_router(reminders.router, prefix="/api/reminders", tags=["Reminders"])
+
+# Level 5
+app.include_router(rooms.router, prefix="/api/rooms", tags=["Rooms"])
+
+# Level 6
+app.include_router(schedule.router, prefix="/api/schedule", tags=["Schedule"])
+app.include_router(developer.router, prefix="/api/developer", tags=["Developer API"])
 
 @app.get("/")
 async def root():

@@ -1,0 +1,93 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 5 UPDATES
+  AI Integrations, Real-time Collaboration & Ecosystem
+  Date: 2026-04-27
+===================================================================
+
+GOAL:
+  Take the application to the ultimate level by introducing AI-powered 
+  learning assistance, real-time multiplayer study rooms with WebSocket 
+  synchronization, voice accessibility features (dictation & TTS), 
+  external calendar integrations, and robust offline data sync.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. REAL-TIME STUDY ROOMS API (WebSocket)
+   ├── File: backend/app/websockets.py               [NEW]
+   ├── File: backend/app/api/rooms.py                [NEW]
+   ├── POST /api/rooms           → create a multiplayer study room
+   ├── GET  /api/rooms           → list active public rooms
+   ├── GET  /api/rooms/{room_id} → get room details
+   ├── WS   /ws/rooms/{room_id}  → real-time connection for timer sync & chat
+   └── MongoDB collection: "rooms"
+
+2. AI "STUDY BUDDY" API
+   ├── File: backend/app/api/ai_tutor.py             [NEW]
+   ├── POST /api/ai/ask      → contextual Q&A based on user's notes
+   ├── POST /api/ai/generate → auto-generate flashcards from text
+   └── POST /api/ai/summary  → generate key bullet points from a long note
+
+3. EXTERNAL CALENDAR API
+   ├── File: backend/app/api/calendar.py             [NEW]
+   ├── POST /api/calendar/sync   → push study reminders to external calendar
+   └── GET  /api/calendar/events → fetch schedule to suggest study blocks
+
+4. WIRE ALL LEVEL 5 ROUTERS
+   ├── File: backend/app/main.py                     [MODIFIED]
+   ├── Added rooms, ai_tutor, and calendar routers.
+   └── Updated version to 5.0.0
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+5. NEW SCREENS
+   ├── File: frontend/lib/screens/rooms_screen.dart        [NEW]
+   │   └── Lobby view, multiplayer synced Pomodoro timer, participant status
+   └── File: frontend/lib/screens/ai_assistant_screen.dart [NEW]
+       └── Chat interface to converse with the AI Study Buddy
+
+6. VOICE & ACCESSIBILITY UPGRADES
+   ├── File: frontend/lib/screens/notes_screen.dart        [MODIFIED]
+   │   └── Added microphone dictation for note-taking (speech_to_text)
+   └── File: frontend/lib/screens/flashcards_screen.dart   [MODIFIED]
+       └── Added Text-to-Speech (TTS) for hands-free audio reviews
+
+7. OFFLINE SYNC ARCHITECTURE
+   ├── File: frontend/lib/services/sync_service.dart       [NEW]
+   └── Local SQLite/Isar cache for offline sessions, automatically 
+       syncing with MongoDB when the network is restored.
+
+8. SETTINGS & PROFILE ENHANCEMENTS
+   ├── File: frontend/lib/screens/settings_screen.dart     [MODIFIED]
+   │   └── Added "Connect Google Calendar" OAuth button
+   ├── File: frontend/lib/screens/main_layout.dart         [MODIFIED]
+   │   └── Upgraded visual theme with glassmorphism effects
+   └── File: frontend/lib/screens/profile_screen.dart      [MODIFIED]
+       └── Updated version display to "v5.0.0 (Level 5)"
+
+===================================================================
+  SUMMARY — FILES CHANGED AT LEVEL 5
+===================================================================
+
+  NEW FILES:
+    backend/app/websockets.py
+    backend/app/api/rooms.py
+    backend/app/api/ai_tutor.py
+    backend/app/api/calendar.py
+    backend/app/models/rooms.py
+    frontend/lib/screens/rooms_screen.dart
+    frontend/lib/screens/ai_assistant_screen.dart
+    frontend/lib/services/sync_service.dart
+
+  MODIFIED FILES:
+    backend/app/main.py
+    frontend/lib/screens/notes_screen.dart
+    frontend/lib/screens/flashcards_screen.dart
+    frontend/lib/screens/settings_screen.dart
+    frontend/lib/screens/main_layout.dart
+    frontend/lib/screens/profile_screen.dart
+
+===================================================================
