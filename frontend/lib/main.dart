@@ -3,6 +3,7 @@ import 'screens/main_layout.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme.dart';
 
 void main() {
   runApp(const SmartStudyTrackerApp());
@@ -17,44 +18,8 @@ class SmartStudyTrackerApp extends StatelessWidget {
       title: 'Smart Study & Productivity',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
-      theme: ThemeData(
-        brightness: Brightness.light,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF6366F1), // Indigo 500
-          secondary: Color(0xFF10B981), // Emerald 500
-          surface: Color(0xFF1E293B), // Slate 800
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: false,
-          titleTextStyle: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-            color: Colors.white,
-          ),
-        ),
-        cardTheme: CardThemeData(
-          color: const Color(0xFF1E293B),
-          elevation: 8.0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Color(0xFF1E293B),
-          selectedItemColor: Color(0xFF6366F1),
-          unselectedItemColor: Color(0xFF64748B),
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-        ),
-      ),
+      theme: ThemeData.light(), // Fallback
+      darkTheme: AppTheme.darkTheme,
       home: const AuthGate(),
     );
   }

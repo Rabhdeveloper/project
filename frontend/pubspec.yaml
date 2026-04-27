@@ -39,6 +39,8 @@ dependencies:
   dio: ^5.9.2
   fl_chart: ^1.2.0
   web_socket_channel: ^3.0.3
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
 
 dev_dependencies:
   flutter_test:

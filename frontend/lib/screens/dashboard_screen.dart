@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../services/api_service.dart';
+import '../theme.dart';
 import 'leaderboard_screen.dart';
 import 'notes_screen.dart';
 import 'flashcards_screen.dart';
@@ -270,19 +272,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // ── Daily Goal + Streak Banner ───────────────────────────────────
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                colors: [AppTheme.primary, AppTheme.accentNeon],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6366F1).withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
+                  color: AppTheme.accentNeon.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -430,11 +432,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           SizedBox(
             height: 230,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.only(
-                    right: 18.0, left: 12.0, top: 24, bottom: 12),
-                child: LineChart(
+            child: GlassContainer(
+              padding: const EdgeInsets.only(
+                  right: 18.0, left: 12.0, top: 24, bottom: 12),
+              child: LineChart(
                   LineChartData(
                     gridData: FlGridData(
                       show: true,
@@ -521,7 +522,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-          ),
+          ).animate().fade(delay: 200.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: 32),
 
           // ── Leaderboard Button ──────────────────────────────────────────
@@ -531,14 +532,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
               );
             },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.25)),
-              ),
+            child: GlassContainer(
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+              color: AppTheme.secondary.withOpacity(0.1),
+              borderColor: AppTheme.secondary.withOpacity(0.3),
               child: Row(
                 children: [
                   const Text('🏅', style: TextStyle(fontSize: 22)),
@@ -550,8 +547,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 24),
+          ).animate().fade(delay: 300.ms).slideY(begin: 0.1, end: 0),
+          const SizedBox(height: 32),
 
           // ── Quick Actions 2x2 Grid ────────────────────────────────────────
           const Text(
@@ -613,24 +610,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 24),
+          ).animate().fade(delay: 400.ms).slideY(begin: 0.1, end: 0),
+          const SizedBox(height: 32),
 
           // ── Daily Tip ─────────────────────────────────────────────────────
           if (_dailyTip != null) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF8B5CF6).withOpacity(0.15),
-                    const Color(0xFF6366F1).withOpacity(0.08),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.2)),
-              ),
+            GlassContainer(
+              padding: const EdgeInsets.all(20),
+              color: AppTheme.primaryAccent.withOpacity(0.15),
+              borderColor: AppTheme.primaryAccent.withOpacity(0.3),
               child: Row(
                 children: [
                   Text(_dailyTip!['icon'] ?? '💡', style: const TextStyle(fontSize: 28)),
@@ -647,8 +635,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
+            ).animate().fade(delay: 500.ms).slideX(begin: -0.1, end: 0),
+            const SizedBox(height: 32),
           ],
 
           // ── Friend Activity ────────────────────────────────────────────────
@@ -660,22 +648,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 4),
             Text('Last 24 hours', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
             const SizedBox(height: 12),
-            ..._friendActivity.take(5).map((a) => Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(14),
-              ),
+            ..._friendActivity.take(5).map((a) => GlassContainer(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              color: AppTheme.surface.withOpacity(0.5),
               child: Row(
                 children: [
                   Container(
-                    width: 36, height: 36,
+                    width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withOpacity(0.15),
+                      gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.accentNeon]),
                       shape: BoxShape.circle,
                     ),
-                    child: const Center(child: Icon(Icons.person, color: Color(0xFF6366F1), size: 20)),
+                    child: const Center(child: Icon(Icons.person, color: Colors.white, size: 22)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -713,13 +697,10 @@ class _DashStatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.25)),
-      ),
+    return GlassContainer(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      color: color.withOpacity(0.15),
+      borderColor: color.withOpacity(0.3),
       child: Column(
         children: [
           Icon(icon, color: color, size: 22),
@@ -764,20 +745,10 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+      child: GlassContainer(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+        color: color.withOpacity(0.15),
+        borderColor: color.withOpacity(0.4),
         child: Column(
           children: [
             Container(
