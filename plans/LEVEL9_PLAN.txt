@@ -1,0 +1,62 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 9 PLAN
+  Saved: 2026-04-29
+===================================================
+
+LEVEL 9 GOAL: Global Knowledge Graph & Decentralized Credentials.
+  Creating a massive, collaborative global study network where content 
+  is interconnected, and achievements/skills are verified via blockchain 
+  for professional credentialing.
+
+---------------------------------------------------
+RECAP — What already exists:
+---------------------------------------------------
+  Level 1-7: Foundation, ecosystem, spatial computing.
+  Level 8: Biometric Integration & Cognitive State Tracking.
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+ ═══════════════════════════════════════════════════
+  SECTION A — GLOBAL KNOWLEDGE GRAPH
+ ═══════════════════════════════════════════════════
+
+1. BACKEND — Graph Database [NEW: app/db/neo4j_client.py]
+   - Map relationships between subjects, notes, and flashcards across millions of users.
+   - "Six Degrees of Knowledge": AI suggests learning pathways connecting disparate topics (e.g., Biology -> Systems Theory -> Computer Science).
+
+ ═══════════════════════════════════════════════════
+  SECTION B — AI COURSE GENERATION
+ ═══════════════════════════════════════════════════
+
+2. BACKEND — Syllabus Generator [NEW: app/api/auto_courses.py]
+   - Users input a goal (e.g., "Learn Quantum Computing from scratch").
+   - AI crawls the global knowledge graph to generate a personalized, day-by-day curriculum pulling the best community-rated notes and flashcards.
+
+ ═══════════════════════════════════════════════════
+  SECTION C — DECENTRALIZED CREDENTIALS (WEB3)
+ ═══════════════════════════════════════════════════
+
+3. BACKEND — Blockchain integration [NEW: app/api/web3_creds.py]
+   - Issue verifiable NFTs or Soulbound Tokens (SBTs) for completed milestones or mastered subjects.
+   - Publicly verifiable resume/portfolio generation based on actual study hours and test scores.
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend:
+    - Graph queries return sub-second pathfinding between subjects.
+    - Smart contract successfully mints a credential token on a testnet.
+  Frontend:
+    - Users can visualize the Knowledge Graph in an interactive 3D web map.
+
+---------------------------------------------------
+IMPLEMENTATION ORDER (recommended):
+---------------------------------------------------
+  Phase 1: Graph Database Migration for Topics
+  Phase 2: AI Course & Syllabus Generator
+  Phase 3: Interactive Knowledge Graph Explorer
+  Phase 4: Web3/Decentralized Credentialing
+
+===================================================

@@ -1,0 +1,67 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 7 PLAN
+  Saved: 2026-04-29
+===================================================
+
+LEVEL 7 GOAL: Immersive Spatial Computing & AR/VR Study Environments.
+  Transforming study sessions into highly immersive, spatial experiences
+  using Virtual Reality (VR) and Augmented Reality (AR) to eliminate
+  physical distractions and enhance spatial memory.
+
+---------------------------------------------------
+RECAP — What already exists:
+---------------------------------------------------
+  Level 1: Foundation (Auth, Timer, Typing)
+  Level 2: Data (History, Stats)
+  Level 3: Gamification (Goals, Streaks, Badges, Subjects, Leaderboard)
+  Level 4: Social & Content (Friends, Notes, Flashcards, Analytics)
+  Level 5: AI & Real-time (Study Buddy, Multiplayer Rooms, Voice Sync)
+  Level 6: Hardware Integrations, Adaptive Learning, & Ecosystem
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+ ═══════════════════════════════════════════════════
+  SECTION A — VR FOCUS PORTALS
+ ═══════════════════════════════════════════════════
+
+1. FRONTEND — VR Client (Meta Quest / Apple Vision Pro) [NEW: vr/ directory]
+   - Fully immersive 3D study environments (e.g., Cyberpunk Library, Zen Garden, Deep Space).
+   - Spatial Audio integration for white noise and focus beats.
+   - Virtual multi-monitor setup for notes and study materials.
+
+ ═══════════════════════════════════════════════════
+  SECTION B — AR INTERACTIVE LEARNING
+ ═══════════════════════════════════════════════════
+
+2. FRONTEND — AR Mobile Mode [MODIFY: frontend/lib/screens/ar_view.dart]
+   - 3D Interactive Flashcards: Project 3D models (anatomy, molecules, architecture) onto the physical desk.
+   - AR Focus Zones: Pin virtual timers and goals to physical objects (e.g., attach a timer to a textbook).
+
+ ═══════════════════════════════════════════════════
+  SECTION C — SPATIAL MULTIPLAYER
+ ═══════════════════════════════════════════════════
+
+3. BACKEND — Spatial Server [NEW: app/api/spatial.py]
+   - Sync avatars and hand gestures for virtual study rooms.
+   - Real-time 3D whiteboard collaboration APIs.
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend:
+    - WebSocket connections handle high-frequency positional updates for VR avatars.
+  Frontend:
+    - User can place an AR flashcard on a table and rotate it using touch gestures.
+    - VR application successfully authenticates and loads the user's dashboard in a 3D space.
+
+---------------------------------------------------
+IMPLEMENTATION ORDER (recommended):
+---------------------------------------------------
+  Phase 1: Basic VR Study Environment & Timer
+  Phase 2: Spatial Audio & Focus Tracking
+  Phase 3: AR Interactive Flashcards
+  Phase 4: Multiplayer VR Study Rooms
+
+===================================================

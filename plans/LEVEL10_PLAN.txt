@@ -1,0 +1,63 @@
+===================================================
+  SMART STUDY TRACKER — LEVEL 10 PLAN
+  Saved: 2026-04-29
+===================================================
+
+LEVEL 10 GOAL: Omnipresent Contextual Intelligence.
+  The ultimate form of the app: seamless IoT integration, predictive 
+  context-aware prompts, and ubiquitous learning interfaces that merge 
+  study with daily life.
+
+---------------------------------------------------
+RECAP — What already exists:
+---------------------------------------------------
+  Level 1-8: Foundation, ecosystem, spatial computing, biometrics.
+  Level 9: Global Knowledge Graph & Decentralized Credentials.
+
+---------------------------------------------------
+COMPONENTS:
+---------------------------------------------------
+
+ ═══════════════════════════════════════════════════
+  SECTION A — SMART HOME & IoT
+ ═══════════════════════════════════════════════════
+
+1. BACKEND — IoT Hub [NEW: app/api/iot.py]
+   - Integration with Smart Lights (Philips Hue), Smart Thermostats, and Smart Speakers.
+   - "Focus Protocol": Starting a timer automatically lowers room temperature (for alertness), shifts lights to cool white, and locks smart doors/phones.
+
+ ═══════════════════════════════════════════════════
+  SECTION B — PREDICTIVE CONTEXT
+ ═══════════════════════════════════════════════════
+
+2. BACKEND — Contextual Engine [NEW: app/core/context.py]
+   - App knows where you are (e.g., commuting, at the library, in bed).
+   - While commuting -> Auto-starts audio flashcards via car Bluetooth.
+   - While in bed -> Auto-starts gentle sleep-learning or review summaries.
+
+ ═══════════════════════════════════════════════════
+  SECTION C — UBIQUITOUS AI AVATAR
+ ═══════════════════════════════════════════════════
+
+3. FRONTEND — Holographic / AR Tutor [NEW: frontend/lib/tutor_avatar.dart]
+   - An omnipresent AI tutor that you can converse with using natural language across all devices (watch, phone, desktop, VR).
+   - Capable of passively listening to real-world lectures and automatically generating notes and quizzes in real-time.
+
+---------------------------------------------------
+VERIFICATION:
+---------------------------------------------------
+  Backend:
+    - IoT commands successfully trigger external smart home APIs.
+    - Contextual engine accurately classifies user state based on GPS/accelerometer data.
+  Frontend:
+    - AI Avatar seamlessly hands off conversations between desktop and mobile devices.
+
+---------------------------------------------------
+IMPLEMENTATION ORDER (recommended):
+---------------------------------------------------
+  Phase 1: IoT Smart Home Integration (Lights/Temp)
+  Phase 2: Predictive Context & Location APIs
+  Phase 3: Ubiquitous Voice Handoff
+  Phase 4: Always-On AI Real-world Lecture Ingestion
+
+===================================================
