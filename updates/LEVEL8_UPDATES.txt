@@ -1,0 +1,61 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 8 UPDATES
+  Biometric Integration & Cognitive State Tracking
+  Date: 2026-04-29
+===================================================================
+
+GOAL:
+  Leverage wearables and biosensors to measure cognitive load,
+  stress, and focus depth. Neuro-adaptive UI automatically adjusts
+  based on biometric state. Predictive burnout prevention.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. BIOMETRIC SENSOR API
+   ├── File: backend/app/api/biometrics.py             [NEW]
+   ├── File: backend/app/models/biometrics.py          [NEW]
+   ├── POST /api/biometrics/ingest             → ingest sensor reading
+   ├── GET  /api/biometrics/history            → historical biometric data
+   ├── GET  /api/biometrics/cognitive-load     → real-time cognitive index
+   ├── GET  /api/biometrics/adaptive-ui        → neuro-adaptive UI state
+   ├── GET  /api/biometrics/burnout-risk       → burnout risk assessment
+   └── MongoDB collection: "biometric_readings"
+
+2. BURNOUT PREDICTION ENGINE
+   ├── File: backend/app/core/burnout_engine.py        [NEW]
+   ├── CognitiveLoadModel computing stress from HRV, GSR, EEG
+   ├── BurnoutPredictor analyzing session patterns + biometric trends
+   └── Intervention levels: suggest_break, suggest_meditation, force_break
+
+3. WIRE LEVEL 8 ROUTER
+   ├── File: backend/app/main.py                       [MODIFIED]
+   └── Added biometrics router under /api/biometrics
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+4. BIOMETRICS DASHBOARD SCREEN
+   ├── File: frontend/lib/screens/biometrics_screen.dart       [NEW]
+   ├── Live metric cards (Heart Rate, HRV, Stress)
+   ├── Cognitive load progress bars with color coding
+   ├── Burnout risk indicator with intervention messages
+   ├── Zen Mode toggle (neuro-adaptive UI)
+   └── Connected devices management (Apple Watch, Muse, Oura)
+
+===================================================================
+  SUMMARY — FILES CHANGED AT LEVEL 8
+===================================================================
+
+  NEW FILES:
+    backend/app/models/biometrics.py
+    backend/app/api/biometrics.py
+    backend/app/core/burnout_engine.py
+    frontend/lib/screens/biometrics_screen.dart
+
+  MODIFIED FILES:
+    backend/app/main.py
+
+===================================================================

@@ -1,0 +1,70 @@
+===================================================================
+  SMART STUDY & PRODUCTIVITY TRACKER — LEVEL 9 UPDATES
+  Global Knowledge Graph & Decentralized Credentials
+  Date: 2026-04-29
+===================================================================
+
+GOAL:
+  Build a collaborative global study network with interconnected
+  knowledge. AI-generated curricula from the knowledge graph.
+  Blockchain-verified credentials (Soulbound Tokens) for achievements.
+
+===================================================================
+  BACKEND UPDATES
+===================================================================
+
+1. KNOWLEDGE GRAPH ENGINE
+   ├── File: backend/app/core/knowledge_graph.py       [NEW]
+   ├── File: backend/app/models/knowledge_graph.py     [NEW]
+   ├── BFS pathfinding between subjects
+   ├── "Six Degrees of Knowledge" discovery algorithm
+   ├── Pre-seeded graph: 25+ topics across Math, Physics, CS, Biology, Chemistry
+   └── 20+ pre-defined academic relationships
+
+2. AI COURSE GENERATION API
+   ├── File: backend/app/api/auto_courses.py           [NEW]
+   ├── GET  /api/courses/topics                → list all graph topics
+   ├── GET  /api/courses/pathway               → find shortest learning path
+   ├── GET  /api/courses/explore/{topic}       → Six Degrees exploration
+   ├── POST /api/courses/generate              → AI-generated curriculum
+   ├── GET  /api/courses                       → list user courses
+   ├── GET  /api/courses/{course_id}           → full syllabus detail
+   └── MongoDB collection: "auto_courses"
+
+3. WEB3 CREDENTIALS API
+   ├── File: backend/app/api/web3_creds.py             [NEW]
+   ├── POST /api/credentials/mint              → mint verifiable credential (SBT)
+   ├── GET  /api/credentials                   → list user credentials
+   ├── GET  /api/credentials/verify/{id}       → public verification (no auth)
+   └── MongoDB collection: "verifiable_credentials"
+
+4. WIRE LEVEL 9 ROUTERS
+   ├── File: backend/app/main.py                       [MODIFIED]
+   └── Added auto_courses and web3_creds routers
+
+===================================================================
+  FRONTEND UPDATES
+===================================================================
+
+5. KNOWLEDGE GRAPH SCREEN
+   ├── File: frontend/lib/screens/knowledge_graph_screen.dart  [NEW]
+   ├── Three-tab interface: Explore, Courses, Credentials
+   ├── Topic exploration with connection counts
+   ├── AI course generation wizard with goal input
+   └── Verifiable credential portfolio with token IDs
+
+===================================================================
+  SUMMARY — FILES CHANGED AT LEVEL 9
+===================================================================
+
+  NEW FILES:
+    backend/app/models/knowledge_graph.py
+    backend/app/core/knowledge_graph.py
+    backend/app/api/auto_courses.py
+    backend/app/api/web3_creds.py
+    frontend/lib/screens/knowledge_graph_screen.dart
+
+  MODIFIED FILES:
+    backend/app/main.py
+
+===================================================================

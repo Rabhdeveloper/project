@@ -1,12 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.api import (
     auth, sessions, typing, goals, achievements, subjects, leaderboard,
     friends, activity, notes, flashcards, analytics, tips, reminders,
-    rooms, schedule, developer
+    rooms, schedule, developer,
+    spatial, biometrics, auto_courses, web3_creds,
+    iot, ai_avatar, security_api,
 )
+from app.security.audit_logger import audit_logger
+from app.core.database import get_database
+from datetime import datetime
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,7 +24,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Smart Study & Productivity Tracker API",
     description="Backend API for real-time tracking of study sessions and typing practice.",
-    version="6.0.0",
+    version="11.0.0",
     lifespan=lifespan
 )
 
@@ -31,6 +36,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ─── Zero-Trust Audit Middleware (Level 11) ───────────────────────────────────
+@app.middleware("http")
+async def audit_middleware(request: Request, call_next):
+    """Log every API request to the immutable audit trail."""
+    response = await call_next(request)
+    
+    # Only audit authenticated API endpoints (skip health/docs)
+    if request.url.path.startswith("/api/"):
+        try:
+            db = get_database()
+            if db is not None:
+                log_entry = audit_logger.create_log_entry(
+                    user_id="system",  # Will be enriched by auth context in production
+                    action=request.method,
+                    resource=request.url.path,
+                    details={"status_code": response.status_code},
+                    ip_address=request.client.host if request.client else "unknown",
+                )
+                await db["audit_logs"].insert_one(log_entry)
+        except Exception:
+            pass  # Audit logging should never block requests
+    
+    return response
+
 
 # Include Routers — Level 1–2
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
@@ -59,10 +90,27 @@ app.include_router(rooms.router, prefix="/api/rooms", tags=["Rooms"])
 app.include_router(schedule.router, prefix="/api/schedule", tags=["Schedule"])
 app.include_router(developer.router, prefix="/api/developer", tags=["Developer API"])
 
+# Level 7 — Spatial Computing & AR/VR
+app.include_router(spatial.router, prefix="/api/spatial", tags=["Spatial Computing"])
+
+# Level 8 — Biometric Integration
+app.include_router(biometrics.router, prefix="/api/biometrics", tags=["Biometrics"])
+
+# Level 9 — Knowledge Graph & Credentials
+app.include_router(auto_courses.router, prefix="/api/courses", tags=["AI Courses"])
+app.include_router(web3_creds.router, prefix="/api/credentials", tags=["Web3 Credentials"])
+
+# Level 10 — IoT & Contextual Intelligence
+app.include_router(iot.router, prefix="/api/iot", tags=["IoT & Smart Home"])
+app.include_router(ai_avatar.router, prefix="/api/avatar", tags=["AI Avatar"])
+
+# Level 11 — Zero-Trust Security
+app.include_router(security_api.router, prefix="/api/security", tags=["Security"])
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the Smart Study Tracker API"}
+    return {"message": "Welcome to the Smart Study Tracker API", "version": "11.0.0"}
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": "11.0.0"}
